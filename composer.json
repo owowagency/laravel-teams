@@ -1,0 +1,54 @@
+{
+    "name": "owowagency/laravel-teams",
+    "description": "Advanced teams functionality in Laravel",
+    "keywords": [
+        "owowagency",
+        "laravel-teams",
+        "teams"
+    ],
+    "homepage": "https://github.com/owowagency/laravel-teams",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Dees Oomens",
+            "email": "dees@owow.io"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+        "illuminate/support": "^8.0"
+    },
+    "require-dev": {
+        "matt-allan/laravel-code-style": "^0.6.0",
+        "orchestra/testbench": "^6.22",
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Owowagency\\Teams\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Owowagency\\Teams\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
+        "post-autoload-dump": [
+            "@php ./vendor/bin/testbench package:discover --ansi"
+        ]
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ServiceProvider"
+            ]
+        }
+    }
+}
