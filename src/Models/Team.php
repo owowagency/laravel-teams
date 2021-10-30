@@ -12,14 +12,14 @@ class Team extends Model
     use HasFactory;
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected $fillable = [
         'name',
     ];
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected static function newFactory(): Factory
     {
