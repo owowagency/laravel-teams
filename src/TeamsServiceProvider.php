@@ -1,17 +1,17 @@
 <?php
 
-namespace Owowagency\Teams;
+namespace OwowAgency\Teams;
 
-use Illuminate\Support\ServiceProvider as BaseServiceProvider;
+use Illuminate\Support\ServiceProvider;
 
-class ServiceProvider extends BaseServiceProvider
+class TeamsServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap the application services.
      */
     public function boot(): void
     {
-        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'laravel-teams');
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'teams');
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
@@ -20,10 +20,10 @@ class ServiceProvider extends BaseServiceProvider
                 __DIR__.'/../config/config.php' => config_path('laravel-teams.php'),
             ], 'config');
 
-            // Publishing the translation files.
+            // Publishing the migration files.
             $this->publishes([
-                __DIR__.'/../resources/lang' => resource_path('lang/vendor/laravel-teams'),
-            ], 'lang');
+                __DIR__.'/../database/migrations' => database_path('migrations'),
+            ], 'migrations');
         }
     }
 
@@ -33,6 +33,6 @@ class ServiceProvider extends BaseServiceProvider
     public function register(): void
     {
         // Automatically apply the package configuration
-        $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'laravel-teams');
+        $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'teams');
     }
 }

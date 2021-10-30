@@ -1,10 +1,10 @@
 <?php
 
-namespace Owowagency\Teams\Tests;
+namespace OwowAgency\Teams\Tests;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as BaseTestCase;
-use Owowagency\Teams\ServiceProvider;
+use OwowAgency\Teams\TeamsServiceProvider;
 
 class TestCase extends BaseTestCase
 {
@@ -18,7 +18,7 @@ class TestCase extends BaseTestCase
     protected function getPackageProviders($app): array
     {
         return [
-            ServiceProvider::class,
+            TeamsServiceProvider::class,
         ];
     }
 }
