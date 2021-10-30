@@ -26,12 +26,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Owowagency\\Teams\\": "src"
+            "OwowAgency\\Teams\\": "src",
+            "OwowAgency\\Database\\Factories\\": "database/factories"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Owowagency\\Teams\\Tests\\": "tests"
+            "OwowAgency\\Teams\\Tests\\": "tests"
         }
     },
     "scripts": {
@@ -47,7 +48,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "ServiceProvider"
+                "OwowAgency\\Teams\\TeamsServiceProvider"
             ]
         }
     }

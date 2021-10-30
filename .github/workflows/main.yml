@@ -12,10 +12,10 @@ jobs:
         strategy:
             fail-fast: true
             matrix:
-                os: [ubuntu-latest, windows-latest]
+                os: [ubuntu-latest]
                 php: [7.4, 8.0]
                 laravel: [8.*]
-                stability: [prefer-lowest, prefer-stable]
+                stability: [prefer-stable]
                 include:
                     - laravel: 8.*
                       testbench: ^6.6
@@ -37,11 +37,14 @@ jobs:
               run: |
                   echo "::add-matcher::${{ runner.tool_cache }}/php.json"
                   echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
             - name: Install dependencies
               run: |
                   composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
                   composer update --${{ matrix.stability }} --prefer-dist --no-interaction
+
             - name: Execute tests
               run: vendor/bin/phpunit
+
             - name: Code sniffer
               run: vendor/bin/php-cs-fixer fix --dry-run --diff
