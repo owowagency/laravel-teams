@@ -17,7 +17,7 @@ class TeamsServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../config/config.php' => config_path('laravel-teams.php'),
+                __DIR__.'/../config/config.php' => config_path('teams.php'),
             ], 'config');
 
             // Publishing the migration files.
