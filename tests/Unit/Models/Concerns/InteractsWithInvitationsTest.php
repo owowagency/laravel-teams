@@ -56,6 +56,32 @@ class InteractsWithInvitationsTest extends TestCase
     }
 
     /** @test */
+    public function it_has_users_using_model(): void
+    {
+        $invitation = Invitation::factory()->create();
+
+        $this->assertTrue($invitation->model->hasUser($invitation->user));
+    }
+
+    /** @test */
+    public function it_has_users_using_integer(): void
+    {
+        $invitation = Invitation::factory()->create();
+
+        $this->assertTrue($invitation->model->hasUser($invitation->user_id));
+    }
+
+    /** @test */
+    public function it_does_not_have_users(): void
+    {
+        $team = Team::factory()->create();
+
+        $invitation = Invitation::factory()->create();
+
+        $this->assertFalse($team->hasUser($invitation->user));
+    }
+
+    /** @test */
     public function it_removes_users_using_model(): void
     {
         $invitation = Invitation::factory()->create();

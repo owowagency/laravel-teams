@@ -80,8 +80,6 @@ class TeamModelTest extends TestCase
 
         $invitation = Invitation::factory()->forModel($team)->create();
 
-        $this->assertTrue(
-            $team->users->first()->is($invitation->user),
-        );
+        $this->assertJsonStructureSnapshot($team->users);
     }
 }

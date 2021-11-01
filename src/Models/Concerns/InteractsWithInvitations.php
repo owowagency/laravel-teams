@@ -24,6 +24,8 @@ trait InteractsWithInvitations
     {
         return $this->belongsToMany(config('teams.user_model'), Invitation::class, 'model_id')
             ->wherePivot('model_type', $this->getMorphClass())
+            // Often needed for Laravel Nova.
+            ->withPivot('id')
             ->withTimestamps();
     }
 
@@ -35,6 +37,18 @@ trait InteractsWithInvitations
         return $this->invitations()->firstOrCreate([
             'user_id' => $user->id ?? $user,
         ]);
+    }
+
+    /**
+     * Determine whether the given user belongs to the invitable model.
+     */
+    public function hasUser(Model|int $user): bool
+    {
+        $table = $this->invitations()->getRelated()->getTable();
+
+        return $this->invitations()
+            ->where("$table.user_id", $user->id ?? $user)
+            ->exists();
     }
 
     /**
