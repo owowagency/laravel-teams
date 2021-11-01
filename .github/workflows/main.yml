@@ -47,4 +47,4 @@ jobs:
               run: vendor/bin/phpunit
 
             - name: Code sniffer
-              run: vendor/bin/php-cs-fixer fix --dry-run --diff
+              run: PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix --dry-run --diff
