@@ -13,8 +13,10 @@ trait HasTeams
      */
     public function teams(): BelongsToMany
     {
-        return $this->belongsToMany(config('teams.model'), Invitation::class, 'user_id', 'model_id')
-            ->wherePivot('model_type', (new Team())->getMorphClass())
+        $teamModel = config('teams.model');
+
+        return $this->belongsToMany($teamModel, Invitation::class, 'user_id', 'model_id')
+            ->wherePivot('model_type', (new $teamModel())->getMorphClass())
             // Often needed for Laravel Nova.
             ->withPivot('id')
             ->withTimestamps();
