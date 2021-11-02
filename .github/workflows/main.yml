@@ -13,7 +13,7 @@ jobs:
             fail-fast: true
             matrix:
                 os: [ubuntu-latest]
-                php: [7.4, 8.0]
+                php: [8.0]
                 laravel: [8.*]
                 stability: [prefer-stable]
                 include:
@@ -47,4 +47,4 @@ jobs:
               run: vendor/bin/phpunit
 
             - name: Code sniffer
-              run: vendor/bin/php-cs-fixer fix --dry-run --diff
+              run: PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix --dry-run --diff
