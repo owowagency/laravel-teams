@@ -26,15 +26,4 @@ return [
 
     'user_model' => config('auth.providers.users.model', App\User::class),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Team types
-    |--------------------------------------------------------------------------
-    |
-    | This should reference to an (Backed) enum with all the possible team types.
-    |
-    */
-
-    'type' => OwowAgency\Teams\TeamType::class,
-
 ];

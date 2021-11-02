@@ -4,7 +4,7 @@ namespace OwowAgency\Teams\Tests\Unit\Models;
 
 use OwowAgency\Teams\Models\Invitation;
 use OwowAgency\Teams\Models\Team;
-use OwowAgency\Teams\TeamType;
+use OwowAgency\Teams\Tests\Support\TeamType;
 use OwowAgency\Teams\Tests\TestCase;
 
 class TeamModelTest extends TestCase
@@ -17,21 +17,8 @@ class TeamModelTest extends TestCase
         $this->assertDatabaseHas('teams', [
             'id' => $team->id,
             'name' => $team->name,
-            'type' => TeamType::DEFAULT->value,
+            'type' => null,
         ]);
-    }
-
-    /** @test */
-    public function it_scopes_types(): void
-    {
-        // Create team with different type.
-        Team::factory()->create([
-            'type' => 99,
-        ]);
-
-        $team = Team::factory()->create();
-
-        $this->assertTrue($team->is(Team::type(TeamType::DEFAULT)->first()));
     }
 
     /** @test */
@@ -42,22 +29,11 @@ class TeamModelTest extends TestCase
             'type' => 99,
         ]);
 
-        $team = Team::factory()->create();
-
-        $this->assertTrue($team->is(Team::type(TeamType::DEFAULT->value)->first()));
-    }
-
-    /** @test */
-    public function it_scopes_types_with_array_of_enum(): void
-    {
-        // Create team with different type.
-        Team::factory()->create([
-            'type' => 99,
+        $team = Team::factory()->create([
+            'type' => TeamType::DEFAULT,
         ]);
 
-        $team = Team::factory()->create();
-
-        $this->assertTrue($team->is(Team::type([TeamType::DEFAULT])->first()));
+        $this->assertTrue($team->is(Team::type(TeamType::DEFAULT)->first()));
     }
 
     /** @test */
@@ -68,9 +44,11 @@ class TeamModelTest extends TestCase
             'type' => 99,
         ]);
 
-        $team = Team::factory()->create();
+        $team = Team::factory()->create([
+            'type' => TeamType::DEFAULT,
+        ]);
 
-        $this->assertTrue($team->is(Team::type([TeamType::DEFAULT->value])->first()));
+        $this->assertTrue($team->is(Team::type([TeamType::DEFAULT])->first()));
     }
 
     /** @test */

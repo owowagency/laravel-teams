@@ -13,11 +13,9 @@ class TeamFactory extends Factory
      */
     public function definition(): array
     {
-        $types = config('teams.type')::cases();
-
         return [
             'name' => $this->faker->name,
-            'type' => $types[array_rand($types)]->value,
+            'type' => null,
         ];
     }
 
