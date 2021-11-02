@@ -44,6 +44,60 @@ class InteractsWithInvitationsTest extends TestCase
     }
 
     /** @test */
+    public function it_adds_users_with_role(): void
+    {
+        $team = Team::factory()->create();
+
+        $user = User::factory()->create();
+
+        $invitation = $team->addUser($user, 'admin');
+
+        $this->assertDatabaseHas('model_has_roles', [
+            'role_id' => 1,
+            'model_type' => $invitation->getMorphClass(),
+            'model_id' => $invitation->id,
+        ]);
+    }
+
+    /** @test */
+    public function it_adds_users_with_permission(): void
+    {
+        $team = Team::factory()->create();
+
+        $user = User::factory()->create();
+
+        $invitation = $team->addUser($user, permissions: 1);
+
+        $this->assertDatabaseHas('model_has_permissions', [
+            'permission_id' => 1,
+            'model_type' => $invitation->getMorphClass(),
+            'model_id' => $invitation->id,
+        ]);
+    }
+
+    /** @test */
+    public function it_adds_users_with_role_and_permission(): void
+    {
+        $team = Team::factory()->create();
+
+        $user = User::factory()->create();
+
+        $invitation = $team->addUser($user, [1], ['edit-users']);
+
+        $this->assertDatabaseHas('model_has_roles', [
+            'role_id' => 1,
+            'model_type' => $invitation->getMorphClass(),
+            'model_id' => $invitation->id,
+        ]);
+
+        $this->assertDatabaseHas('model_has_permissions', [
+            'permission_id' => 1,
+            'model_type' => $invitation->getMorphClass(),
+            'model_id' => $invitation->id,
+        ]);
+    }
+
+    /** @test */
     public function it_does_not_add_users_twice(): void
     {
         $team = Team::factory()->create();
@@ -82,13 +136,59 @@ class InteractsWithInvitationsTest extends TestCase
     }
 
     /** @test */
+    public function it_has_users_with_roles(): void
+    {
+        $invitation = Invitation::factory()->create()
+            ->assignRole(1);
+
+        $this->assertTrue($invitation->model->hasUserWithRole(
+            $invitation->user,
+            1,
+        ));
+    }
+
+    /** @test */
+    public function it_does_not_have_users_with_roles(): void
+    {
+        $invitation = Invitation::factory()->create();
+
+        $this->assertFalse($invitation->model->hasUserWithRole(
+            $invitation->user,
+            1,
+        ));
+    }
+
+    /** @test */
+    public function it_has_users_with_permission_to(): void
+    {
+        $invitation = Invitation::factory()->create()
+            ->givePermissionTo('edit-users');
+
+        $this->assertTrue($invitation->model->hasUserWithPermissionTo(
+            $invitation->user,
+            'edit-users',
+        ));
+    }
+
+    /** @test */
+    public function it_does_not_have_users_with_permission_to(): void
+    {
+        $invitation = Invitation::factory()->create();
+
+        $this->assertFalse($invitation->model->hasUserWithPermissionTo(
+            $invitation->user,
+            'edit-users',
+        ));
+    }
+
+    /** @test */
     public function it_removes_users_using_model(): void
     {
         $invitation = Invitation::factory()->create();
 
         $removed = $invitation->model->removeUser($invitation->user);
 
-        $this->assertEquals(1, $removed);
+        $this->assertTrue($removed);
 
         $this->assertDatabaseMissing('invitations', [
             'model_type' => $invitation->model_type,
@@ -104,7 +204,7 @@ class InteractsWithInvitationsTest extends TestCase
 
         $removed = $invitation->model->removeUser($invitation->user_id);
 
-        $this->assertEquals(1, $removed);
+        $this->assertTrue($removed);
 
         $this->assertDatabaseMissing('invitations', [
             'model_type' => $invitation->model_type,
@@ -122,12 +222,43 @@ class InteractsWithInvitationsTest extends TestCase
 
         $removed = $team->removeUser($invitation->user);
 
-        $this->assertEquals(0, $removed);
+        $this->assertNull($removed);
 
         $this->assertDatabaseHas('invitations', [
             'model_type' => $invitation->model_type,
             'model_id' => $invitation->model_id,
             'user_id' => $invitation->user_id,
+        ]);
+    }
+
+    /** @test */
+    public function it_removes_roles_and_permissions(): void
+    {
+        $invitation = Invitation::factory()
+            ->create()
+            ->assignRole(1)
+            ->givePermissionTo(1);
+
+        $removed = $invitation->model->removeUser($invitation->user);
+
+        $this->assertTrue($removed);
+
+        $this->assertDatabaseMissing('invitations', [
+            'model_type' => $invitation->model_type,
+            'model_id' => $invitation->model_id,
+            'user_id' => $invitation->user_id,
+        ]);
+
+        $this->assertDatabaseMissing('model_has_roles', [
+            'model_type' => $invitation->model_type,
+            'model_id' => $invitation->model_id,
+            'role_id' => 1,
+        ]);
+
+        $this->assertDatabaseMissing('model_has_permissions', [
+            'model_type' => $invitation->model_type,
+            'model_id' => $invitation->model_id,
+            'permission_id' => 1,
         ]);
     }
 }

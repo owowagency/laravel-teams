@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use OwowAgency\Database\Factories\InvitationFactory;
+use Spatie\Permission\Traits\HasRoles;
 
 class Invitation extends Pivot
 {
-    use HasFactory;
+    use HasFactory, HasRoles;
 
     /**
      * Indicates if the IDs are auto-incrementing.
@@ -29,6 +30,14 @@ class Invitation extends Pivot
      * @var string
      */
     protected $table = 'invitations';
+
+    /**
+     * Get the guard name for this model.
+     */
+    public function guardName(): string
+    {
+        return config('auth.defaults.guard');
+    }
 
     /**
      * The morph to relation to the related model.

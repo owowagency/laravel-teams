@@ -21,11 +21,35 @@ interface HasInvitations
 
     /**
      * Add the given user to the invitable model.
+     *
+     * @param  array|int|\Spatie\Permission\Contracts\Role|string  $roles
+     * @param  array|\Illuminate\Support\Collection|\Spatie\Permission\Contracts\Permission|string  $permissions
      */
-    public function addUser(Model|int $user): Invitation;
+    public function addUser(Model|int $user, $roles = [], $permissions = []): Invitation;
+
+    /**
+     * Determine whether the given user is in the invitable model.
+     */
+    public function hasUser(Model|int $user): bool;
+
+    /**
+     * Determine whether the given user is in the invitable model and has the
+     * given role.
+     *
+     * @param  array|\Illuminate\Support\Collection|int|\Spatie\Permission\Contracts\Role|string  $roles
+     */
+    public function hasUserWithRole(Model|int $user, $roles): bool;
+
+    /**
+     * Determine whether the given user is in the invitable model and has the
+     * given permission to.
+     *
+     * @param  array|\Illuminate\Support\Collection|\Spatie\Permission\Contracts\Permission|string  $permissions
+     */
+    public function hasUserWithPermissionTo(Model|int $user, $permissions): bool;
 
     /**
      * Remove the given user from the invitable model.
      */
-    public function removeUser(Model|int $user): int;
+    public function removeUser(Model|int $user): ?bool;
 }
