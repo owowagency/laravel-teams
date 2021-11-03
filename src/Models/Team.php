@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use OwowAgency\Database\Factories\TeamFactory;
+use OwowAgency\Teams\Enums\TeamPrivacy;
 use OwowAgency\Teams\Models\Concerns\InteractsWithInvitations;
 use OwowAgency\Teams\Models\Contracts\HasInvitations;
 
@@ -19,8 +20,27 @@ class Team extends Model implements HasInvitations
      * {@inheritdoc}
      */
     protected $fillable = [
-        'name', 'type',
+        'name', 'type', 'privacy',
     ];
+
+    /**
+     * {@inheritdoc}
+     */
+    protected $casts = [
+        'type' => 'integer',
+        'privacy' => TeamPrivacy::class,
+    ];
+
+    /**
+     * Scope a query to include only teams with the given privacy.
+     */
+    public function scopePrivacy(Builder $query, int|array $privacy): Builder
+    {
+        return $query->whereIn(
+            'privacy',
+            array_map(fn (int $type) => $type, Arr::wrap($privacy)),
+        );
+    }
 
     /**
      * Scope a query to include only teams with the given type.

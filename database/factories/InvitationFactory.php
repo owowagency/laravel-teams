@@ -3,6 +3,7 @@
 namespace OwowAgency\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use OwowAgency\Teams\Enums\InvitationStatus;
 use OwowAgency\Teams\Models\Contracts\HasInvitations;
 use OwowAgency\Teams\Models\Invitation;
 
@@ -26,6 +27,7 @@ class InvitationFactory extends Factory
             'model_id' => $teamModel::factory(),
             'model_type' => (new $teamModel())->getMorphClass(),
             'user_id' => config('teams.user_model')::factory(),
+            'status' => InvitationStatus::JOINED,
         ];
     }
 

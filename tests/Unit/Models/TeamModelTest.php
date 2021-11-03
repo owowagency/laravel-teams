@@ -2,6 +2,7 @@
 
 namespace OwowAgency\Teams\Tests\Unit\Models;
 
+use OwowAgency\Teams\Enums\TeamPrivacy;
 use OwowAgency\Teams\Models\Invitation;
 use OwowAgency\Teams\Models\Team;
 use OwowAgency\Teams\Tests\Support\TeamType;
@@ -29,11 +30,11 @@ class TeamModelTest extends TestCase
             'type' => 99,
         ]);
 
-        $team = Team::factory()->create([
+        Team::factory()->create([
             'type' => TeamType::DEFAULT,
         ]);
 
-        $this->assertTrue($team->is(Team::type(TeamType::DEFAULT)->first()));
+        $this->assertJsonStructureSnapshot(Team::type(TeamType::DEFAULT)->get());
     }
 
     /** @test */
@@ -44,11 +45,41 @@ class TeamModelTest extends TestCase
             'type' => 99,
         ]);
 
-        $team = Team::factory()->create([
+        Team::factory()->create([
             'type' => TeamType::DEFAULT,
         ]);
 
-        $this->assertTrue($team->is(Team::type([TeamType::DEFAULT])->first()));
+        $this->assertJsonStructureSnapshot(Team::type([TeamType::DEFAULT])->get());
+    }
+
+    /** @test */
+    public function it_scopes_privacy_with_integers(): void
+    {
+        // Create team with different type.
+        Team::factory()->create([
+            'privacy' => TeamPrivacy::REQUESTABLE,
+        ]);
+
+        Team::factory()->create([
+            'privacy' => TeamPrivacy::OPEN,
+        ]);
+
+        $this->assertJsonStructureSnapshot(Team::privacy(TeamPrivacy::OPEN)->get());
+    }
+
+    /** @test */
+    public function it_scopes_privacy_with_array_of_integers(): void
+    {
+        // Create team with different type.
+        Team::factory()->create([
+            'privacy' => TeamPrivacy::REQUESTABLE,
+        ]);
+
+        Team::factory()->create([
+            'privacy' => TeamPrivacy::OPEN,
+        ]);
+
+        $this->assertJsonStructureSnapshot(Team::privacy([TeamPrivacy::OPEN])->get());
     }
 
     /** @test */
@@ -56,7 +87,7 @@ class TeamModelTest extends TestCase
     {
         $team = Team::factory()->create();
 
-        $invitation = Invitation::factory()->forModel($team)->create();
+        Invitation::factory()->forModel($team)->create();
 
         $this->assertJsonStructureSnapshot($team->users);
     }

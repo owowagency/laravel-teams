@@ -19,7 +19,7 @@ trait HasTeams
         return $this->belongsToMany($teamModel, Invitation::class, 'user_id', 'model_id')
             ->wherePivot('model_type', (new $teamModel())->getMorphClass())
             // Often needed for Laravel Nova.
-            ->withPivot('id')
+            ->withPivot(['id', 'model_type', 'status'])
             ->withTimestamps();
     }
 
