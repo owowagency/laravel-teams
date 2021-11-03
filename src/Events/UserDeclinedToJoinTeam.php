@@ -12,7 +12,7 @@ class UserDeclinedToJoinTeam
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
-     * UserAddedToTeam constructor.
+     * UserDeclinedToJoinTeam constructor.
      */
     public function __construct(public Invitation $invitation)
     {

@@ -7,7 +7,7 @@ use Exception;
 class InvitationAlreadyDeclined extends Exception
 {
     /**
-     * InvitationAlreadyExcepted constructor.
+     * InvitationAlreadyDeclined constructor.
      */
     public function __construct()
     {

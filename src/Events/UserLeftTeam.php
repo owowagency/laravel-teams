@@ -12,7 +12,7 @@ class UserLeftTeam
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
-     * UserAddedToTeam constructor.
+     * UserLeftTeam constructor.
      */
     public function __construct(public Invitation $invitation)
     {
