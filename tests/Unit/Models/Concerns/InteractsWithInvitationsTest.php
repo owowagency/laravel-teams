@@ -130,4 +130,24 @@ class InteractsWithInvitationsTest extends TestCase
             'user_id' => $invitation->user_id,
         ]);
     }
+
+    /** @test */
+    public function it_gets_the_invitation(): void
+    {
+        $invitation = Invitation::factory()->create();
+
+        $response = $invitation->model->getInvitation($invitation->user);
+
+        $this->assertTrue($invitation->is($response));
+    }
+
+    /** @test */
+    public function it_does_not_get_the_invitation(): void
+    {
+        $invitation = Invitation::factory()->create();
+
+        $user = User::factory()->create();
+
+        $this->assertNull($invitation->model->getInvitation($user));
+    }
 }

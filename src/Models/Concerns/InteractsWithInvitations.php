@@ -44,11 +44,7 @@ trait InteractsWithInvitations
      */
     public function hasUser(Model|int $user): bool
     {
-        $table = $this->invitations()->getRelated()->getTable();
-
-        return $this->invitations()
-            ->where("$table.user_id", $user->id ?? $user)
-            ->exists();
+        return $this->getInvitation($user) !== null;
     }
 
     /**
@@ -59,5 +55,15 @@ trait InteractsWithInvitations
         return $this->invitations()
             ->where('user_id', $user->id ?? $user)
             ->delete();
+    }
+
+    /**
+     * Get the invitation for the given user.
+     */
+    public function getInvitation(Model|int $user): ?Invitation
+    {
+        return $this->invitations()
+            ->where('user_id', $user->id ?? $user)
+            ->first();
     }
 }

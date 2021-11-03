@@ -28,4 +28,9 @@ interface HasInvitations
      * Remove the given user from the invitable model.
      */
     public function removeUser(Model|int $user): int;
+
+    /**
+     * Get the invitation for the given user.
+     */
+    public function getInvitation(Model|int $user): ?Invitation;
 }
