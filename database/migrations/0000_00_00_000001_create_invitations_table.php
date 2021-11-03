@@ -4,23 +4,29 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTeamsTable extends Migration
+class CreateInvitationsTable extends Migration
 {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('teams', function (Blueprint $table) {
+        Schema::create('invitations', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->index();
-            $table->tinyInteger('type')->nullable()->default(null);
+            $table->morphs('model');
+            $table->foreignIdFor(config('teams.user_model'))
+                ->constrained()
+                ->cascadeOnDelete();
             $table->timestamps();
+
+            $table->unique(['model_type', 'model_id', 'user_id']);
         });
     }
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
     public function down(): void
     {

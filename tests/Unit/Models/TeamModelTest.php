@@ -2,6 +2,7 @@
 
 namespace OwowAgency\Teams\Tests\Unit\Models;
 
+use OwowAgency\Teams\Models\Invitation;
 use OwowAgency\Teams\Models\Team;
 use OwowAgency\Teams\Tests\Support\TeamType;
 use OwowAgency\Teams\Tests\TestCase;
@@ -48,5 +49,15 @@ class TeamModelTest extends TestCase
         ]);
 
         $this->assertTrue($team->is(Team::type([TeamType::DEFAULT])->first()));
+    }
+
+    /** @test */
+    public function it_has_users(): void
+    {
+        $team = Team::factory()->create();
+
+        $invitation = Invitation::factory()->forModel($team)->create();
+
+        $this->assertJsonStructureSnapshot($team->users);
     }
 }

@@ -4,11 +4,33 @@ namespace OwowAgency\Teams\Tests;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as BaseTestCase;
+use OwowAgency\Snapshots\MatchesSnapshots;
 use OwowAgency\Teams\TeamsServiceProvider;
+use OwowAgency\Teams\Tests\Support\Models\User;
 
 class TestCase extends BaseTestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, MatchesSnapshots;
+
+    /**
+     * Define environment setup.
+     *
+     * @param  \Illuminate\Foundation\Application  $app
+     */
+    protected function defineEnvironment($app): void
+    {
+        $app['config']->set('teams.user_model', User::class);
+    }
+
+    /**
+     * Define database migrations.
+     *
+     * @return void
+     */
+    protected function defineDatabaseMigrations()
+    {
+        $this->loadLaravelMigrations();
+    }
 
     /**
      * Get package providers.
