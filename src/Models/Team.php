@@ -9,11 +9,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use OwowAgency\Database\Factories\TeamFactory;
 use OwowAgency\Teams\Models\Concerns\InteractsWithInvitations;
+use OwowAgency\Teams\Models\Concerns\RelatesToTeams;
 use OwowAgency\Teams\Models\Contracts\HasInvitations;
 
 class Team extends Model implements HasInvitations
 {
-    use HasFactory, InteractsWithInvitations;
+    use HasFactory, InteractsWithInvitations, RelatesToTeams;
 
     /**
      * {@inheritdoc}

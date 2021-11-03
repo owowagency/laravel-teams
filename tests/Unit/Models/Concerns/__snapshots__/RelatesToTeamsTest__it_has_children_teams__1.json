@@ -1,0 +1,13 @@
+[
+    {
+        "id": 2,
+        "name": "Freeman Walter",
+        "type": null,
+        "created_at": "2021-11-02T14:33:01.000000Z",
+        "updated_at": "2021-11-02T14:33:01.000000Z",
+        "pivot": {
+            "parent_id": "1",
+            "child_id": "2"
+        }
+    }
+]

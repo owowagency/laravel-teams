@@ -1,0 +1,13 @@
+[
+    {
+        "id": 1,
+        "name": "Miss Sheila Huel II",
+        "type": null,
+        "created_at": "2021-11-02T14:31:07.000000Z",
+        "updated_at": "2021-11-02T14:31:07.000000Z",
+        "pivot": {
+            "child_id": "2",
+            "parent_id": "1"
+        }
+    }
+]
