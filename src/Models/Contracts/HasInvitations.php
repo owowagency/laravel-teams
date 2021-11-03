@@ -72,4 +72,9 @@ interface HasInvitations
      * Accept the invitation for the given user of this team.
      */
     public function acceptInvitation(Model|int $user): ?Invitation;
+
+    /**
+     * Decline the invitation for the given user of this team.
+     */
+    public function declineInvitation(Model|int $user): ?Invitation;
 }
