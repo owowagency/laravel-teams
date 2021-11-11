@@ -22,7 +22,7 @@ class InteractsWithInvitationsTest extends TestCase
     /** @test */
     public function it_receives_users_with_type(): void
     {
-        $invitation = Invitation::factory()->create([
+        $invitation = Invitation::factory()->accepted()->create([
             'type' => InvitationType::REQUEST,
         ]);
 

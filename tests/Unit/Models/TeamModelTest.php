@@ -87,7 +87,7 @@ class TeamModelTest extends TestCase
     {
         $team = Team::factory()->create();
 
-        Invitation::factory()->forModel($team)->create();
+        Invitation::factory()->forModel($team)->accepted()->create();
 
         $this->assertJsonStructureSnapshot($team->users);
     }

@@ -3,11 +3,11 @@
 namespace OwowAgency\Teams\Models\Concerns;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use OwowAgency\Teams\Enums\InvitationType;
 use OwowAgency\Teams\Exceptions\InvitationAlreadyAccepted;
 use OwowAgency\Teams\Models\Invitation;
+use OwowAgency\Teams\Models\Relations\BelongsToMany;
 
 trait InteractsWithInvitations
 {
@@ -24,8 +24,17 @@ trait InteractsWithInvitations
      */
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(config('teams.user_model'), (new Invitation())->getTable(), 'model_id')
-            ->using(Invitation::class)
+        $instance = new (config('teams.user_model'));
+
+        // Use a custom belongs to many relationship so that we can easily
+        // add scopes on the pivot relationship.
+        $belongsToMany = new BelongsToMany(
+            $instance->newQuery(), $this, (new Invitation())->getTable(), 'model_id',
+            $instance->getForeignKey(), $this->getKeyName(), $instance->getKeyName(),
+        );
+
+        return $belongsToMany->using(Invitation::class)
+            ->withAccepted()
             ->withPivot(['id', 'model_type', 'type', 'accepted_at', 'declined_at'])
             ->withTimestamps();
     }

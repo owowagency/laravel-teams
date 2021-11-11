@@ -31,6 +31,7 @@ class InvitationModelTest extends TestCase
 
         $this->assertJsonStructureSnapshot(Invitation::type(InvitationType::REQUEST)->get());
     }
+
     /** @test */
     public function it_scopes_accepted_invitations(): void
     {
@@ -40,6 +41,7 @@ class InvitationModelTest extends TestCase
 
         $this->assertJsonStructureSnapshot(Invitation::accepted()->get());
     }
+
     /** @test */
     public function it_scopes_declined_invitations(): void
     {
