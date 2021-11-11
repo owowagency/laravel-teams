@@ -14,8 +14,8 @@ class SetupTeamsTables extends Migration
         Schema::create('teams', function (Blueprint $table) {
             $table->id();
             $table->string('name')->index();
-            $table->tinyInteger('type')->nullable()->default(null);
-            $table->tinyInteger('privacy')->nullable()->default(null);
+            $table->unsignedTinyInteger('type')->nullable()->default(null);
+            $table->unsignedTinyInteger('privacy')->nullable()->default(null);
             $table->timestamps();
         });
 
@@ -23,7 +23,7 @@ class SetupTeamsTables extends Migration
             $table->id();
             $table->morphs('model');
             $table->foreignIdFor(config('teams.user_model'))->constrained()->cascadeOnDelete();
-            $table->tinyInteger('status');
+            $table->unsignedTinyInteger('type');
             $table->timestamp('accepted_at')->nullable()->default(null);
             $table->timestamp('declined_at')->nullable()->default(null);
             $table->timestamps();

@@ -2,8 +2,7 @@
 
 namespace OwowAgency\Teams\Observers;
 
-use OwowAgency\Teams\Enums\InvitationStatus;
-use OwowAgency\Teams\Events\UserAddedToTeam;
+use OwowAgency\Teams\Enums\InvitationType;
 use OwowAgency\Teams\Events\UserDeclinedToJoinTeam;
 use OwowAgency\Teams\Events\UserInvitedToTeam;
 use OwowAgency\Teams\Events\UserJoinedTeam;
@@ -18,9 +17,12 @@ class InvitationObserver
      */
     public function created(Invitation $invitation): void
     {
-        UserAddedToTeam::dispatch($invitation);
+        $event = match ($invitation->type->value) {
+            InvitationType::REQUEST => UserRequestedToJoinTeam::class,
+            InvitationType::INVITATION => UserInvitedToTeam::class,
+        };
 
-        $this->dispatchStatusEvent($invitation);
+        $event::dispatch($invitation);
     }
 
     /**
@@ -28,8 +30,18 @@ class InvitationObserver
      */
     public function updated(Invitation $invitation): void
     {
-        if ($invitation->wasChanged('status')) {
-            $this->dispatchStatusEvent($invitation);
+        if (
+            $invitation->wasChanged('accepted_at')
+            && $invitation->accepted_at !== null
+        ) {
+            UserJoinedTeam::dispatch($invitation);
+        }
+
+        if (
+            $invitation->wasChanged('declined_at')
+            && $invitation->declined_at !== null
+        ) {
+            UserDeclinedToJoinTeam::dispatch($invitation);
         }
     }
 
@@ -38,21 +50,8 @@ class InvitationObserver
      */
     public function deleted(Invitation $invitation): void
     {
-        UserLeftTeam::dispatch($invitation);
-    }
-
-    /*
-     * Dispatch the status event of the given invitation.
-     */
-    private function dispatchStatusEvent(Invitation $invitation): void
-    {
-        $event = match ($invitation->status->value) {
-            InvitationStatus::JOINED => UserJoinedTeam::class,
-            InvitationStatus::INVITED => UserInvitedToTeam::class,
-            InvitationStatus::REQUESTED_TO_JOIN => UserRequestedToJoinTeam::class,
-            InvitationStatus::DECLINED => UserDeclinedToJoinTeam::class,
-        };
-
-        $event::dispatch($invitation);
+        if ($invitation->accepted_at !== null) {
+            UserLeftTeam::dispatch($invitation);
+        }
     }
 }

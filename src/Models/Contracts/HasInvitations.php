@@ -2,10 +2,10 @@
 
 namespace OwowAgency\Teams\Models\Contracts;
 
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use OwowAgency\Teams\Enums\InvitationType;
 use OwowAgency\Teams\Models\Invitation;
 
 interface HasInvitations
@@ -16,31 +16,37 @@ interface HasInvitations
     public function invitations(): MorphMany;
 
     /**
-     * The belongs to many relationship to all users which joined the team.
+     * The belongs to many relationship to all users of the model.
      */
     public function users(): BelongsToMany;
 
     /**
-     * The belongs to many relationship to ALL users. This also includes users
-     * which declined the invitation.
-     */
-    public function allUsers(): BelongsToMany;
-
-    /**
-     * Get all users that match the given invitation status.
-     *
-     * @param  array|int|\OwowAgency\Teams\Enums\InvitationStatus|string  $status
-     */
-    public function usersWithStatus($status): Collection;
-
-    /**
-     * Add the given user to the invitable model.
+     * Invite the given user to the invitable model.
      *
      * @param  array|int|\Spatie\Permission\Contracts\Role|string  $roles
      * @param  array|\Illuminate\Support\Collection|\Spatie\Permission\Contracts\Permission|string  $permissions
-     * @param  null|int|\OwowAgency\Teams\Enums\InvitationStatus  $status
      */
-    public function addUser(Model|int $user, $roles = null, $permissions = null, $status = null): Invitation;
+    public function inviteUser(Model|int $user, $roles = null, $permissions = null): Invitation;
+
+    /**
+     * Request if the given user may join the invitable model.
+     */
+    public function requestToJoin(Model|int $user): Invitation;
+
+    /**
+     * Add the given user to the invitable model and automatically accept the
+     * invitation.
+     *
+     * @param  array|int|\Spatie\Permission\Contracts\Role|string  $roles
+     * @param  array|\Illuminate\Support\Collection|\Spatie\Permission\Contracts\Permission|string  $permissions
+     */
+    public function addUser(
+        Model|int $user,
+        InvitationType|int $invitationType,
+        $roles = null,
+        $permissions = null,
+        bool $autoAccept = false,
+    ): Invitation;
 
     /**
      * Determine whether the given user is in the invitable model.
@@ -62,6 +68,11 @@ interface HasInvitations
      * @param  array|\Illuminate\Support\Collection|\Spatie\Permission\Contracts\Permission|string  $permissions
      */
     public function hasUserWithPermissionTo(Model|int $user, $permissions): bool;
+
+    /**
+     * Determine whether the given user is invited to the model.
+     */
+    public function hasInvitedUser(Model|int $user): bool;
 
     /**
      * Remove the given user from the invitable model.

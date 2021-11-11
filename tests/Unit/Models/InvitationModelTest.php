@@ -4,9 +4,11 @@ namespace OwowAgency\Teams\Tests\Unit\Models;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
-use OwowAgency\Teams\Enums\InvitationStatus;
+use OwowAgency\Teams\Enums\InvitationType;
+use OwowAgency\Teams\Events\UserDeclinedToJoinTeam;
 use OwowAgency\Teams\Events\UserInvitedToTeam;
 use OwowAgency\Teams\Events\UserJoinedTeam;
+use OwowAgency\Teams\Events\UserLeftTeam;
 use OwowAgency\Teams\Events\UserRequestedToJoinTeam;
 use OwowAgency\Teams\Exceptions\InvitationAlreadyAccepted;
 use OwowAgency\Teams\Exceptions\InvitationAlreadyDeclined;
@@ -16,61 +18,36 @@ use OwowAgency\Teams\Tests\TestCase;
 class InvitationModelTest extends TestCase
 {
     /** @test */
-    public function it_scopes_status_with_integers(): void
+    public function it_scopes_type_with_integers(): void
     {
-        // Create invitation with different status.
+        // Create invitation with different type.
         Invitation::factory()->create([
-            'status' => InvitationStatus::INVITED,
+            'type' => InvitationType::INVITATION,
         ]);
 
         Invitation::factory()->create([
-            'status' => InvitationStatus::JOINED,
+            'type' => InvitationType::REQUEST,
         ]);
 
-        $this->assertJsonStructureSnapshot(Invitation::status(InvitationStatus::JOINED)->get());
+        $this->assertJsonStructureSnapshot(Invitation::type(InvitationType::REQUEST)->get());
     }
-
     /** @test */
-    public function it_scopes_status_with_array_of_integers(): void
+    public function it_scopes_accepted_invitations(): void
     {
-        // Create invitation with different status.
-        Invitation::factory()->create([
-            'status' => InvitationStatus::INVITED,
-        ]);
+        Invitation::factory()->declined()->create();
 
-        Invitation::factory()->create([
-            'status' => InvitationStatus::JOINED,
-        ]);
+        Invitation::factory()->accepted()->create();
 
-        $this->assertJsonStructureSnapshot(Invitation::status([InvitationStatus::JOINED])->get());
+        $this->assertJsonStructureSnapshot(Invitation::accepted()->get());
     }
-
     /** @test */
-    public function it_dispatch_events_on_join(): void
+    public function it_scopes_declined_invitations(): void
     {
-        Event::fake([UserJoinedTeam::class]);
+        Invitation::factory()->declined()->create();
 
-        $invitation = Invitation::factory()->create([
-            'status' => InvitationStatus::REQUESTED_TO_JOIN,
-        ]);
+        Invitation::factory()->accepted()->create();
 
-        $invitation->update(['status' => InvitationStatus::JOINED]);
-
-        Event::assertDispatched(UserJoinedTeam::class);
-    }
-
-    /** @test */
-    public function it_dispatch_events_on_request_to_join(): void
-    {
-        Event::fake([UserRequestedToJoinTeam::class]);
-
-        $invitation = Invitation::factory()->create([
-            'status' => InvitationStatus::JOINED,
-        ]);
-
-        $invitation->update(['status' => InvitationStatus::REQUESTED_TO_JOIN]);
-
-        Event::assertDispatched(UserRequestedToJoinTeam::class);
+        $this->assertJsonStructureSnapshot(Invitation::declined()->get());
     }
 
     /** @test */
@@ -79,12 +56,46 @@ class InvitationModelTest extends TestCase
         Event::fake([UserInvitedToTeam::class]);
 
         $invitation = Invitation::factory()->create([
-            'status' => InvitationStatus::JOINED,
+            'type' => InvitationType::INVITATION,
         ]);
 
-        $invitation->update(['status' => InvitationStatus::INVITED]);
+        Event::assertDispatched(fn (UserInvitedToTeam $e) => $e->invitation->is($invitation));
+    }
 
-        Event::assertDispatched(UserInvitedToTeam::class);
+    /** @test */
+    public function it_dispatch_events_on_request_to_join(): void
+    {
+        Event::fake([UserRequestedToJoinTeam::class]);
+
+        $invitation = Invitation::factory()->create([
+            'type' => InvitationType::REQUEST,
+        ]);
+
+        Event::assertDispatched(fn (UserRequestedToJoinTeam $e) => $e->invitation->is($invitation));
+    }
+
+    /** @test */
+    public function it_dispatch_events_on_deletion(): void
+    {
+        Event::fake([UserLeftTeam::class]);
+
+        $invitation = Invitation::factory()->accepted()->create();
+
+        $invitation->delete();
+
+        Event::assertDispatched(fn (UserLeftTeam $e) => $e->invitation->is($invitation));
+    }
+
+    /** @test */
+    public function it_doest_not_dispatch_events_on_deletion(): void
+    {
+        Event::fake([UserLeftTeam::class]);
+
+        $invitation = Invitation::factory()->create();
+
+        $invitation->delete();
+
+        Event::assertNotDispatched(UserLeftTeam::class);
     }
 
     /** @test */
@@ -94,17 +105,18 @@ class InvitationModelTest extends TestCase
         // in the database.
         Carbon::setTestNow($now = now());
 
-        $invitation = Invitation::factory()->create([
-            'status' => InvitationStatus::INVITED,
-        ]);
+        Event::fake([UserJoinedTeam::class]);
+
+        $invitation = Invitation::factory()->create();
 
         $invitation->accept();
 
         $this->assertDatabaseHas('invitations', [
             'id' => $invitation->id,
-            'status' => InvitationStatus::JOINED,
             'accepted_at' => $now,
         ]);
+
+        Event::assertDispatched(fn (UserJoinedTeam $e) => $e->invitation->is($invitation));
     }
 
     /** @test */
@@ -112,9 +124,7 @@ class InvitationModelTest extends TestCase
     {
         $this->expectException(InvitationAlreadyAccepted::class);
 
-        $invitation = Invitation::factory()->create([
-            'status' => InvitationStatus::JOINED,
-        ]);
+        $invitation = Invitation::factory()->accepted()->create();
 
         $invitation->accept();
     }
@@ -126,17 +136,18 @@ class InvitationModelTest extends TestCase
         // in the database.
         Carbon::setTestNow($now = now());
 
-        $invitation = Invitation::factory()->create([
-            'status' => InvitationStatus::INVITED,
-        ]);
+        Event::fake([UserDeclinedToJoinTeam::class]);
+
+        $invitation = Invitation::factory()->create();
 
         $invitation->decline();
 
         $this->assertDatabaseHas('invitations', [
             'id' => $invitation->id,
-            'status' => InvitationStatus::DECLINED,
             'declined_at' => $now,
         ]);
+
+        Event::assertDispatched(fn (UserDeclinedToJoinTeam $e) => $e->invitation->is($invitation));
     }
 
     /** @test */
@@ -144,9 +155,7 @@ class InvitationModelTest extends TestCase
     {
         $this->expectException(InvitationAlreadyDeclined::class);
 
-        $invitation = Invitation::factory()->create([
-            'status' => InvitationStatus::DECLINED,
-        ]);
+        $invitation = Invitation::factory()->declined()->create();
 
         $invitation->decline();
     }
@@ -156,9 +165,7 @@ class InvitationModelTest extends TestCase
     {
         $this->expectException(InvitationAlreadyAccepted::class);
 
-        $invitation = Invitation::factory()->create([
-            'status' => InvitationStatus::JOINED,
-        ]);
+        $invitation = Invitation::factory()->accepted()->create();
 
         $invitation->decline();
     }

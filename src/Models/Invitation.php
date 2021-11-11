@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Support\Arr;
 use OwowAgency\Database\Factories\InvitationFactory;
-use OwowAgency\Teams\Enums\InvitationStatus;
+use OwowAgency\Teams\Enums\InvitationType;
 use OwowAgency\Teams\Exceptions\InvitationAlreadyAccepted;
 use OwowAgency\Teams\Exceptions\InvitationAlreadyDeclined;
 use Spatie\Permission\Traits\HasRoles;
@@ -42,7 +42,7 @@ class Invitation extends Pivot
     protected $casts = [
         'model_id' => 'integer',
         'user_id' => 'integer',
-        'status' => InvitationStatus::class,
+        'type' => InvitationType::class,
         'accepted_at' => 'datetime',
         'declined_at' => 'datetime',
     ];
@@ -64,48 +64,66 @@ class Invitation extends Pivot
     }
 
     /**
-     * Scope a query to include only invitations with the given status.
+     * Scope a query to include only invitations with the given type.
      */
-    public function scopeStatus(Builder $query, int|array $status): Builder
+    public function scopeType(Builder $query, int|array $type): Builder
     {
         return $query->whereIn(
-            'status',
-            array_map(fn (int $type) => $type, Arr::wrap($status)),
+            'type',
+            array_map(fn (int $type) => $type, Arr::wrap($type)),
         );
     }
 
     /**
-     * Accept the invitation.
+     * Scope a query to include only invitations which are accepted.
      */
-    public function accept(): void
+    public function scopeAccepted(Builder $query): Builder
     {
-        if ($this->status->is(InvitationStatus::JOINED)) {
-            throw new InvitationAlreadyAccepted();
-        }
+        return $query->whereNotNull('accepted_at');
+    }
 
-        $this->update([
-            'status' => InvitationStatus::JOINED,
-            'accepted_at' => now(),
-        ]);
+    /**
+     * Scope a query to include only invitations which are declined.
+     */
+    public function scopeDeclined(Builder $query): Builder
+    {
+        return $query->whereNotNull('declined_at');
     }
 
     /**
      * Accept the invitation.
      */
-    public function decline(): void
+    public function accept(): Invitation
     {
-        if ($this->status->is(InvitationStatus::JOINED)) {
+        if ($this->accepted_at !== null) {
             throw new InvitationAlreadyAccepted();
         }
 
-        if ($this->status->is(InvitationStatus::DECLINED)) {
+        $this->update([
+            'accepted_at' => now(),
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * Decline the invitation.
+     */
+    public function decline(): Invitation
+    {
+        if ($this->accepted_at !== null) {
+            throw new InvitationAlreadyAccepted();
+        }
+
+        if ($this->declined_at !== null) {
             throw new InvitationAlreadyDeclined();
         }
 
         $this->update([
-            'status' => InvitationStatus::DECLINED,
             'declined_at' => now(),
         ]);
+
+        return $this;
     }
 
     /**

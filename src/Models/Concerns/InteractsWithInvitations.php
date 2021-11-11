@@ -2,12 +2,11 @@
 
 namespace OwowAgency\Teams\Models\Concerns;
 
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Support\Arr;
-use OwowAgency\Teams\Enums\InvitationStatus;
+use OwowAgency\Teams\Enums\InvitationType;
+use OwowAgency\Teams\Exceptions\InvitationAlreadyAccepted;
 use OwowAgency\Teams\Models\Invitation;
 
 trait InteractsWithInvitations
@@ -21,56 +20,54 @@ trait InteractsWithInvitations
     }
 
     /**
-     * The belongs to many relationship to all users which joined the team.
+     * The belongs to many relationship to all users of the model.
      */
     public function users(): BelongsToMany
     {
-        return $this->allUsers()->wherePivot('status', InvitationStatus::JOINED);
-    }
-
-    /**
-     * The belongs to many relationship to ALL users. This also includes users
-     * which declined the invitation.
-     */
-    public function allUsers(): BelongsToMany
-    {
-        return $this->belongsToMany(config('teams.user_model'), Invitation::class, 'model_id')
-            ->wherePivot('model_type', $this->getMorphClass())
-            // Often needed for Laravel Nova.
-            ->withPivot(['id', 'model_type', 'status'])
+        return $this->belongsToMany(config('teams.user_model'), (new Invitation())->getTable(), 'model_id')
+            ->using(Invitation::class)
+            ->withPivot(['id', 'model_type', 'type', 'accepted_at', 'declined_at'])
             ->withTimestamps();
     }
 
     /**
-     * Get all users that match the given invitation status.
-     *
-     * @param  array|int|\OwowAgency\Teams\Enums\InvitationStatus|string  $status
-     */
-    public function usersWithStatus($status): Collection
-    {
-        return $this->users()
-            ->wherePivotIn('status', Arr::wrap($status))
-            ->get();
-    }
-
-    /**
-     * Add the given user to the invitable model.
+     * Invite the given user to the invitable model.
      *
      * @param  array|int|\Spatie\Permission\Contracts\Role|string  $roles
      * @param  array|\Illuminate\Support\Collection|\Spatie\Permission\Contracts\Permission|string  $permissions
-     * @param  null|int|\OwowAgency\Teams\Enums\InvitationStatus  $status
      */
-    public function addUser(Model|int $user, $roles = null, $permissions = null, $status = null): Invitation
+    public function inviteUser(Model|int $user, $roles = null, $permissions = null): Invitation
     {
-        $status = $status ?? $this->defaultInvitationStatus();
+        return $this->addUser($user, InvitationType::INVITATION, $roles, $permissions);
+    }
 
+    /**
+     * Request if the given user may join the invitable model.
+     */
+    public function requestToJoin(Model|int $user): Invitation
+    {
+        return $this->addUser($user, InvitationType::REQUEST);
+    }
+
+    /**
+     * Add the given user to the invitable model and automatically accept the
+     * invitation.
+     *
+     * @param  array|int|\Spatie\Permission\Contracts\Role|string  $roles
+     * @param  array|\Illuminate\Support\Collection|\Spatie\Permission\Contracts\Permission|string  $permissions
+     */
+    public function addUser(
+        Model|int $user,
+        InvitationType|int $invitationType,
+        $roles = null,
+        $permissions = null,
+        bool $autoAccept = false,
+    ): Invitation {
         $invitation = $this->invitations()
+            // If the invitation already exists we'll retrieve it.
             ->firstOrCreate(
                 ['user_id' => $user->id ?? $user],
-                [
-                    'status' => $status,
-                    'accepted_at' => $status === InvitationStatus::JOINED ? now() : null,
-                ],
+                ['type' => $invitationType->value ?? $invitationType],
             );
 
         if (! empty($roles)) {
@@ -81,7 +78,15 @@ trait InteractsWithInvitations
             $invitation->givePermissionTo($permissions);
         }
 
-        return $invitation;
+        try {
+            if ($autoAccept) {
+                $invitation->accept();
+            }
+        } catch (InvitationAlreadyAccepted) {
+            //
+        } finally {
+            return $invitation;
+        }
     }
 
     /**
@@ -122,7 +127,22 @@ trait InteractsWithInvitations
         $table = $this->invitations()->getRelated()->getTable();
 
         return $this->invitations()
+            ->accepted()
             ->where("$table.user_id", $user->id ?? $user);
+    }
+
+    /**
+     * Determine whether the given user is in the invitable model.
+     */
+    public function hasInvitedUser(Model|int $user): bool
+    {
+        $table = $this->invitations()->getRelated()->getTable();
+
+        return $this->invitations()
+            ->whereNull('accepted_at')
+            ->whereNull('declined_at')
+            ->where("$table.user_id", $user->id ?? $user)
+            ->exists();
     }
 
     /**
@@ -171,15 +191,5 @@ trait InteractsWithInvitations
         $method = $accept ? 'accept' : 'decline';
 
         return tap($invitation)->$method();
-    }
-
-    /**
-     * Get the default invitation status of this team.
-     */
-    public function defaultInvitationStatus(): int
-    {
-        $privacy = $this->privacy ?? config('teams.default_privacy');
-
-        return InvitationStatus::parseFromPrivacy($privacy);
     }
 }
