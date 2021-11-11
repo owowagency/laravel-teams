@@ -2,7 +2,6 @@
 
 namespace OwowAgency\Teams\Models;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
@@ -36,7 +35,7 @@ class TeamTeam extends Pivot
     /**
      * {@inheritdoc}
      */
-    protected static function newFactory(): Factory
+    protected static function newFactory()
     {
         return new TeamTeamFactory();
     }

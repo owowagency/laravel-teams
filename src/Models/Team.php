@@ -3,7 +3,6 @@
 namespace OwowAgency\Teams\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -66,7 +65,7 @@ class Team extends Model implements HasInvitations
     /**
      * {@inheritdoc}
      */
-    protected static function newFactory(): Factory
+    protected static function newFactory()
     {
         return new TeamFactory();
     }

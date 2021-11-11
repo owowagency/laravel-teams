@@ -2,7 +2,6 @@
 
 namespace OwowAgency\Teams\Tests\Support\Models;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use OwowAgency\Teams\Models\Concerns\HasTeams;
@@ -15,7 +14,7 @@ class User extends Authenticatable
     /**
      * {@inheritdoc}
      */
-    protected static function newFactory(): Factory
+    protected static function newFactory()
     {
         return new UserFactory();
     }

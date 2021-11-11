@@ -3,7 +3,6 @@
 namespace OwowAgency\Teams\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -137,7 +136,7 @@ class Invitation extends Pivot
     /**
      * {@inheritdoc}
      */
-    protected static function newFactory(): Factory
+    protected static function newFactory()
     {
         return new InvitationFactory();
     }
