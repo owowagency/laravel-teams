@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Arr;
 use OwowAgency\Database\Factories\TeamFactory;
 use OwowAgency\Teams\Enums\TeamPrivacy;
@@ -21,7 +22,7 @@ class Team extends Model implements HasInvitations
      * {@inheritdoc}
      */
     protected $fillable = [
-        'name', 'type', 'privacy',
+        'name', 'creator_id', 'type', 'privacy',
     ];
 
     /**
@@ -31,6 +32,14 @@ class Team extends Model implements HasInvitations
         'type' => 'integer',
         'privacy' => TeamPrivacy::class,
     ];
+
+    /**
+     * The belongs to relationship to the creator of the team.
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(config('teams.user_model'));
+    }
 
     /**
      * Scope a query to include only teams with the given privacy.

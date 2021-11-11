@@ -15,6 +15,7 @@ class TeamFactory extends Factory
     {
         return [
             'name' => $this->faker->name,
+            'creator_id' => null,
             'type' => null,
             'privacy' => null,
         ];

@@ -5,6 +5,7 @@ namespace OwowAgency\Teams\Tests\Unit\Models;
 use OwowAgency\Teams\Enums\TeamPrivacy;
 use OwowAgency\Teams\Models\Invitation;
 use OwowAgency\Teams\Models\Team;
+use OwowAgency\Teams\Tests\Support\Models\User;
 use OwowAgency\Teams\Tests\Support\TeamType;
 use OwowAgency\Teams\Tests\TestCase;
 
@@ -19,6 +20,24 @@ class TeamModelTest extends TestCase
             'id' => $team->id,
             'name' => $team->name,
             'type' => null,
+        ]);
+    }
+
+    /** @test */
+    public function it_has_a_creator(): void
+    {
+        $user = User::factory()->create();
+
+        $team = Team::factory()->create([
+            'creator_id' => $user->id,
+        ]);
+
+        $this->assertTrue($user->is($team->creator));
+
+        $this->assertDatabaseHas('teams', [
+            'id' => $team->id,
+            'name' => $team->name,
+            'creator_id' => $user->id,
         ]);
     }
 
