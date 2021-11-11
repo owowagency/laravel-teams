@@ -1,10 +1,11 @@
 [
     {
         "id": 1,
-        "name": "Miss Sheila Huel II",
+        "name": "Ryleigh Stamm PhD",
         "type": null,
-        "created_at": "2021-11-02T14:31:07.000000Z",
-        "updated_at": "2021-11-02T14:31:07.000000Z",
+        "privacy": null,
+        "created_at": "2021-11-11T10:39:17.000000Z",
+        "updated_at": "2021-11-11T10:39:17.000000Z",
         "pivot": {
             "child_id": "2",
             "parent_id": "1"
