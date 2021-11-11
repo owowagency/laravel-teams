@@ -1,11 +1,12 @@
 [
     {
         "id": 1,
-        "name": "Emie Schmitt",
+        "name": "Prof. Wilhelmine Hahn DDS",
+        "creator_id": null,
         "type": null,
         "privacy": null,
-        "created_at": "2021-11-11T07:18:27.000000Z",
-        "updated_at": "2021-11-11T07:18:27.000000Z",
+        "created_at": "2021-11-11T11:38:54.000000Z",
+        "updated_at": "2021-11-11T11:38:54.000000Z",
         "pivot": {
             "user_id": 1,
             "model_id": 1,
@@ -14,8 +15,8 @@
             "type": 0,
             "accepted_at": null,
             "declined_at": null,
-            "created_at": "2021-11-11T07:18:27.000000Z",
-            "updated_at": "2021-11-11T07:18:27.000000Z"
+            "created_at": "2021-11-11T11:38:54.000000Z",
+            "updated_at": "2021-11-11T11:38:54.000000Z"
         }
     }
 ]

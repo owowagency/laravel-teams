@@ -1,11 +1,12 @@
 [
     {
         "id": 1,
-        "name": "Ryleigh Stamm PhD",
+        "name": "Magdalena Daugherty",
+        "creator_id": null,
         "type": null,
         "privacy": null,
-        "created_at": "2021-11-11T10:39:17.000000Z",
-        "updated_at": "2021-11-11T10:39:17.000000Z",
+        "created_at": "2021-11-11T11:39:13.000000Z",
+        "updated_at": "2021-11-11T11:39:13.000000Z",
         "pivot": {
             "child_id": "2",
             "parent_id": "1"
