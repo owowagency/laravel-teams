@@ -201,4 +201,14 @@ trait InteractsWithInvitations
 
         return tap($invitation)->$method();
     }
+
+    /**
+     * Get the invitation for the given user.
+     */
+    public function getInvitation(Model|int $user): ?Invitation
+    {
+        return $this->invitations()
+            ->where('user_id', $user->id ?? $user)
+            ->first();
+    }
 }
