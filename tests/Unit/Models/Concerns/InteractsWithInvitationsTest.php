@@ -2,6 +2,16 @@
 
 namespace OwowAgency\Teams\Tests\Unit\Models\Concerns;
 
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Event;
+use OwowAgency\Teams\Enums\InvitationType;
+use OwowAgency\Teams\Events\UserDeclinedToJoinTeam;
+use OwowAgency\Teams\Events\UserInvitedToTeam;
+use OwowAgency\Teams\Events\UserJoinedTeam;
+use OwowAgency\Teams\Events\UserLeftTeam;
+use OwowAgency\Teams\Events\UserRequestedToJoinTeam;
+use OwowAgency\Teams\Exceptions\InvitationAlreadyAccepted;
+use OwowAgency\Teams\Exceptions\InvitationAlreadyDeclined;
 use OwowAgency\Teams\Models\Invitation;
 use OwowAgency\Teams\Models\Team;
 use OwowAgency\Teams\Tests\Support\Models\User;
@@ -10,36 +20,159 @@ use OwowAgency\Teams\Tests\TestCase;
 class InteractsWithInvitationsTest extends TestCase
 {
     /** @test */
-    public function it_adds_users_using_model(): void
+    public function it_receives_users_with_type(): void
     {
+        $invitation = Invitation::factory()->accepted()->create([
+            'type' => InvitationType::REQUEST,
+        ]);
+
+        Invitation::factory()->create([
+            'model_id' => $invitation->model_id,
+            'type' => InvitationType::INVITATION,
+        ]);
+
+        $response = $invitation->model->users()
+            ->wherePivot('type', InvitationType::REQUEST)
+            ->get();
+
+        $this->assertJsonStructureSnapshot($response);
+    }
+
+    /** @test */
+    public function it_adds_users_using_model_as_invitation(): void
+    {
+        Event::fake([UserInvitedToTeam::class]);
+
         $team = Team::factory()->create();
 
         $user = User::factory()->create();
 
-        $invitation = $team->addUser($user);
+        $invitation = $team->addUser($user, InvitationType::INVITATION);
 
         $this->assertDatabaseHas('invitations', [
             'id' => $invitation->id,
             'model_type' => $team->getMorphClass(),
             'model_id' => $team->id,
             'user_id' => $user->id,
+            'type' => InvitationType::INVITATION,
+            'accepted_at' => null,
+        ]);
+
+        Event::assertDispatched(UserInvitedToTeam::class);
+    }
+
+    /** @test */
+    public function it_adds_users_using_id_as_request(): void
+    {
+        Event::fake([UserRequestedToJoinTeam::class]);
+
+        $team = Team::factory()->create();
+
+        $user = User::factory()->create();
+
+        $invitation = $team->addUser($user->id, InvitationType::REQUEST);
+
+        $this->assertDatabaseHas('invitations', [
+            'id' => $invitation->id,
+            'model_type' => $team->getMorphClass(),
+            'model_id' => $team->id,
+            'user_id' => $user->id,
+            'type' => InvitationType::REQUEST,
+            'accepted_at' => null,
+        ]);
+
+        Event::assertDispatched(UserRequestedToJoinTeam::class);
+    }
+
+    /** @test */
+    public function it_invites_users_using_model(): void
+    {
+        $team = Team::factory()->create();
+
+        $user = User::factory()->create();
+
+        $invitation = $team->inviteUser($user, InvitationType::INVITATION);
+
+        $this->assertDatabaseHas('invitations', [
+            'id' => $invitation->id,
+            'model_type' => $team->getMorphClass(),
+            'model_id' => $team->id,
+            'user_id' => $user->id,
+            'type' => InvitationType::INVITATION,
+            'accepted_at' => null,
         ]);
     }
 
     /** @test */
-    public function it_adds_users_using_id(): void
+    public function it_requests_users_using_model(): void
     {
         $team = Team::factory()->create();
 
         $user = User::factory()->create();
 
-        $invitation = $team->addUser($user->id);
+        $invitation = $team->requestToJoin($user);
 
         $this->assertDatabaseHas('invitations', [
             'id' => $invitation->id,
             'model_type' => $team->getMorphClass(),
             'model_id' => $team->id,
             'user_id' => $user->id,
+            'type' => InvitationType::REQUEST,
+            'accepted_at' => null,
+        ]);
+    }
+
+    /** @test */
+    public function it_adds_users_with_role(): void
+    {
+        $team = Team::factory()->create();
+
+        $user = User::factory()->create();
+
+        $invitation = $team->inviteUser($user, 'admin');
+
+        $this->assertDatabaseHas('model_has_roles', [
+            'role_id' => 1,
+            'model_type' => $invitation->getMorphClass(),
+            'model_id' => $invitation->id,
+        ]);
+    }
+
+    /** @test */
+    public function it_adds_users_with_permission(): void
+    {
+        $team = Team::factory()->create();
+
+        $user = User::factory()->create();
+
+        $invitation = $team->inviteUser($user, permissions: 1);
+
+        $this->assertDatabaseHas('model_has_permissions', [
+            'permission_id' => 1,
+            'model_type' => $invitation->getMorphClass(),
+            'model_id' => $invitation->id,
+        ]);
+    }
+
+    /** @test */
+    public function it_adds_users_with_role_and_permission(): void
+    {
+        $team = Team::factory()->create();
+
+        $user = User::factory()->create();
+
+        $invitation = $team->inviteUser($user, [1], ['edit-users']);
+
+        $this->assertDatabaseHas('model_has_roles', [
+            'role_id' => 1,
+            'model_type' => $invitation->getMorphClass(),
+            'model_id' => $invitation->id,
+        ]);
+
+        $this->assertDatabaseHas('model_has_permissions', [
+            'permission_id' => 1,
+            'model_type' => $invitation->getMorphClass(),
+            'model_id' => $invitation->id,
         ]);
     }
 
@@ -50,25 +183,26 @@ class InteractsWithInvitationsTest extends TestCase
 
         $invitation = Invitation::factory()->forModel($team)->create();
 
-        $this->assertTrue($invitation->is($team->addUser($invitation->user)));
+        $this->assertTrue($invitation->is($team->inviteUser($invitation->user)));
 
         $this->assertDatabaseCount('invitations', 1);
     }
 
     /** @test */
-    public function it_has_users_using_model(): void
+    public function it_has_users(): void
     {
-        $invitation = Invitation::factory()->create();
+        $invitation = Invitation::factory()->accepted()->create();
 
         $this->assertTrue($invitation->model->hasUser($invitation->user));
+        $this->assertTrue($invitation->model->hasUser($invitation->user_id));
     }
 
     /** @test */
-    public function it_has_users_using_integer(): void
+    public function it_does_not_have_unaccepted_users(): void
     {
         $invitation = Invitation::factory()->create();
 
-        $this->assertTrue($invitation->model->hasUser($invitation->user_id));
+        $this->assertFalse($invitation->model->hasUser($invitation->user));
     }
 
     /** @test */
@@ -82,19 +216,76 @@ class InteractsWithInvitationsTest extends TestCase
     }
 
     /** @test */
+    public function it_does_not_have_declined_users(): void
+    {
+        $invitation = Invitation::factory()->declined()->create();
+
+        $this->assertFalse($invitation->model->hasUser($invitation->user));
+    }
+
+    /** @test */
+    public function it_has_users_with_roles(): void
+    {
+        $invitation = Invitation::factory()->accepted()->create()->assignRole(1);
+
+        $this->assertTrue($invitation->model->hasUserWithRole(
+            $invitation->user,
+            1,
+        ));
+    }
+
+    /** @test */
+    public function it_does_not_have_users_with_roles(): void
+    {
+        $invitation = Invitation::factory()->accepted()->create();
+
+        $this->assertFalse($invitation->model->hasUserWithRole(
+            $invitation->user,
+            1,
+        ));
+    }
+
+    /** @test */
+    public function it_has_users_with_permission_to(): void
+    {
+        $invitation = Invitation::factory()->accepted()->create()
+            ->givePermissionTo('edit-users');
+
+        $this->assertTrue($invitation->model->hasUserWithPermissionTo(
+            $invitation->user,
+            'edit-users',
+        ));
+    }
+
+    /** @test */
+    public function it_does_not_have_users_with_permission_to(): void
+    {
+        $invitation = Invitation::factory()->accepted()->create();
+
+        $this->assertFalse($invitation->model->hasUserWithPermissionTo(
+            $invitation->user,
+            'edit-users',
+        ));
+    }
+
+    /** @test */
     public function it_removes_users_using_model(): void
     {
-        $invitation = Invitation::factory()->create();
+        Event::fake([UserLeftTeam::class]);
+
+        $invitation = Invitation::factory()->accepted()->create();
 
         $removed = $invitation->model->removeUser($invitation->user);
 
-        $this->assertEquals(1, $removed);
+        $this->assertTrue($removed);
 
         $this->assertDatabaseMissing('invitations', [
             'model_type' => $invitation->model_type,
             'model_id' => $invitation->model_id,
             'user_id' => $invitation->user_id,
         ]);
+
+        Event::assertDispatched(UserLeftTeam::class);
     }
 
     /** @test */
@@ -104,7 +295,7 @@ class InteractsWithInvitationsTest extends TestCase
 
         $removed = $invitation->model->removeUser($invitation->user_id);
 
-        $this->assertEquals(1, $removed);
+        $this->assertTrue($removed);
 
         $this->assertDatabaseMissing('invitations', [
             'model_type' => $invitation->model_type,
@@ -122,12 +313,159 @@ class InteractsWithInvitationsTest extends TestCase
 
         $removed = $team->removeUser($invitation->user);
 
-        $this->assertEquals(0, $removed);
+        $this->assertNull($removed);
 
         $this->assertDatabaseHas('invitations', [
             'model_type' => $invitation->model_type,
             'model_id' => $invitation->model_id,
             'user_id' => $invitation->user_id,
+        ]);
+    }
+
+    /** @test */
+    public function it_removes_roles_and_permissions(): void
+    {
+        $invitation = Invitation::factory()
+            ->create()
+            ->assignRole(1)
+            ->givePermissionTo(1);
+
+        $removed = $invitation->model->removeUser($invitation->user);
+
+        $this->assertTrue($removed);
+
+        $this->assertDatabaseMissing('invitations', [
+            'model_type' => $invitation->model_type,
+            'model_id' => $invitation->model_id,
+            'user_id' => $invitation->user_id,
+        ]);
+
+        $this->assertDatabaseMissing('model_has_roles', [
+            'model_type' => $invitation->model_type,
+            'model_id' => $invitation->model_id,
+            'role_id' => 1,
+        ]);
+
+        $this->assertDatabaseMissing('model_has_permissions', [
+            'model_type' => $invitation->model_type,
+            'model_id' => $invitation->model_id,
+            'permission_id' => 1,
+        ]);
+    }
+
+    /** @test */
+    public function it_can_accept_an_invitation(): void
+    {
+        Carbon::setTestNow($now = now());
+
+        Event::fake([UserJoinedTeam::class]);
+
+        $invitation = Invitation::factory()->create([
+            'type' => InvitationType::INVITATION,
+        ]);
+
+        $response = $invitation->model->acceptInvitation($invitation->user);
+
+        $this->assertTrue($invitation->is($response));
+
+        $this->assertDatabaseHas('invitations', [
+            'id' => $invitation->id,
+            'type' => InvitationType::INVITATION,
+            'accepted_at' => $now,
+        ]);
+
+        Event::assertDispatched(UserJoinedTeam::class);
+    }
+
+    /** @test */
+    public function it_cant_accept_an_invitation_twice(): void
+    {
+        $this->expectException(InvitationAlreadyAccepted::class);
+
+        $invitation = Invitation::factory()->accepted()->create([
+            'type' => InvitationType::REQUEST,
+        ]);
+
+        $invitation->model->acceptInvitation($invitation->user);
+    }
+
+    /** @test */
+    public function it_cant_accept_an_unknown_invitation(): void
+    {
+        $invitation = Invitation::factory()->create();
+
+        // Different team.
+        $team = Team::factory()->create();
+
+        $this->assertNull($team->acceptInvitation($invitation->user));
+
+        $this->assertDatabaseHas('invitations', [
+            'id' => $invitation->id,
+            'accepted_at' => null,
+        ]);
+    }
+
+    /** @test */
+    public function it_can_decline_an_invitation(): void
+    {
+        Carbon::setTestNow($now = now());
+
+        Event::fake([UserDeclinedToJoinTeam::class]);
+
+        $invitation = Invitation::factory()->create([
+            'type' => InvitationType::INVITATION,
+        ]);
+
+        $response = $invitation->model->declineInvitation($invitation->user);
+
+        $this->assertTrue($invitation->is($response));
+
+        $this->assertDatabaseHas('invitations', [
+            'id' => $invitation->id,
+            'declined_at' => $now,
+        ]);
+
+        Event::assertDispatched(UserDeclinedToJoinTeam::class);
+    }
+
+    /** @test */
+    public function it_cant_decline_an_invitation_twice(): void
+    {
+        $this->expectException(InvitationAlreadyDeclined::class);
+
+        $invitation = Invitation::factory()->declined()->create();
+
+        $invitation->model->declineInvitation($invitation->user);
+    }
+
+    /** @test */
+    public function it_cant_decline_an_accepted_invitation(): void
+    {
+        $this->expectException(InvitationAlreadyAccepted::class);
+
+        $invitation = Invitation::factory()->accepted()->create();
+
+        $invitation->model->declineInvitation($invitation->user);
+
+        $this->assertDatabaseHas('invitations', [
+            'id' => $invitation->id,
+            'declined_at' => null,
+        ]);
+    }
+
+    /** @test */
+    public function it_cant_decline_an_unknown_invitation(): void
+    {
+        $invitation = Invitation::factory()->create();
+
+        // Different team.
+        $team = Team::factory()->create();
+
+        $this->assertNull($team->declineInvitation($invitation->user));
+
+        $this->assertDatabaseHas('invitations', [
+            'id' => $invitation->id,
+            'declined_at' => null,
         ]);
     }
 

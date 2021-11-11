@@ -3,6 +3,8 @@
 namespace OwowAgency\Teams;
 
 use Illuminate\Support\ServiceProvider;
+use OwowAgency\Teams\Models\Invitation;
+use OwowAgency\Teams\Observers\InvitationObserver;
 
 class TeamsServiceProvider extends ServiceProvider
 {
@@ -25,6 +27,8 @@ class TeamsServiceProvider extends ServiceProvider
                 __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'migrations');
         }
+
+        Invitation::observe(InvitationObserver::class);
     }
 
     /**

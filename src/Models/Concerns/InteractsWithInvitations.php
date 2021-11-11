@@ -3,9 +3,11 @@
 namespace OwowAgency\Teams\Models\Concerns;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use OwowAgency\Teams\Enums\InvitationType;
+use OwowAgency\Teams\Exceptions\InvitationAlreadyAccepted;
 use OwowAgency\Teams\Models\Invitation;
+use OwowAgency\Teams\Models\Relations\BelongsToMany;
 
 trait InteractsWithInvitations
 {
@@ -18,43 +20,186 @@ trait InteractsWithInvitations
     }
 
     /**
-     * The belongs to many relationship to users.
+     * The belongs to many relationship to all users of the model.
      */
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(config('teams.user_model'), Invitation::class, 'model_id')
-            ->wherePivot('model_type', $this->getMorphClass())
-            // Often needed for Laravel Nova.
-            ->withPivot('id')
+        $instance = new (config('teams.user_model'));
+
+        // Use a custom belongs to many relationship so that we can easily
+        // add scopes on the pivot relationship.
+        $belongsToMany = new BelongsToMany(
+            $instance->newQuery(), $this, (new Invitation())->getTable(), 'model_id',
+            $instance->getForeignKey(), $this->getKeyName(), $instance->getKeyName(),
+        );
+
+        return $belongsToMany->using(Invitation::class)
+            ->withAccepted()
+            ->withPivot(['id', 'model_type', 'type', 'accepted_at', 'declined_at'])
             ->withTimestamps();
     }
 
     /**
-     * Add the given user to the invitable model.
+     * Invite the given user to the invitable model.
+     *
+     * @param  array|int|\Spatie\Permission\Contracts\Role|string  $roles
+     * @param  array|\Illuminate\Support\Collection|\Spatie\Permission\Contracts\Permission|string  $permissions
      */
-    public function addUser(Model|int $user): Invitation
+    public function inviteUser(Model|int $user, $roles = null, $permissions = null): Invitation
     {
-        return $this->invitations()->firstOrCreate([
-            'user_id' => $user->id ?? $user,
-        ]);
+        return $this->addUser($user, InvitationType::INVITATION, $roles, $permissions);
     }
 
     /**
-     * Determine whether the given user belongs to the invitable model.
+     * Request if the given user may join the invitable model.
+     */
+    public function requestToJoin(Model|int $user): Invitation
+    {
+        return $this->addUser($user, InvitationType::REQUEST);
+    }
+
+    /**
+     * Add the given user to the invitable model and automatically accept the
+     * invitation.
+     *
+     * @param  array|int|\Spatie\Permission\Contracts\Role|string  $roles
+     * @param  array|\Illuminate\Support\Collection|\Spatie\Permission\Contracts\Permission|string  $permissions
+     */
+    public function addUser(
+        Model|int $user,
+        InvitationType|int $invitationType,
+        $roles = null,
+        $permissions = null,
+        bool $autoAccept = false,
+    ): Invitation {
+        $invitation = $this->invitations()
+            // If the invitation already exists we'll retrieve it.
+            ->firstOrCreate(
+                ['user_id' => $user->id ?? $user],
+                ['type' => $invitationType->value ?? $invitationType],
+            );
+
+        if (! empty($roles)) {
+            $invitation->assignRole($roles);
+        }
+
+        if (! empty($permissions)) {
+            $invitation->givePermissionTo($permissions);
+        }
+
+        try {
+            if ($autoAccept) {
+                $invitation->accept();
+            }
+        } catch (InvitationAlreadyAccepted) {
+            //
+        } finally {
+            return $invitation;
+        }
+    }
+
+    /**
+     * Determine whether the given user is in the invitable model.
      */
     public function hasUser(Model|int $user): bool
     {
-        return $this->getInvitation($user) !== null;
+        return $this->hasUserQuery($user)->exists();
+    }
+
+    /**
+     * Determine whether the given user belongs to the invitable model and has
+     * the correct role.
+     */
+    public function hasUserWithRole(Model|int $user, $roles): bool
+    {
+        return $this->hasUserQuery($user)
+            ->role($roles)
+            ->exists();
+    }
+
+    /**
+     * Determine whether the given user is in the invitable model and has the
+     * given permission to.
+     */
+    public function hasUserWithPermissionTo(Model|int $user, $permissions): bool
+    {
+        return $this->hasUserQuery($user)
+            ->permission($permissions)
+            ->exists();
+    }
+
+    /*
+     * Build the base of the "hasUser" query.
+     */
+    private function hasUserQuery(Model|int $user): MorphMany
+    {
+        $table = $this->invitations()->getRelated()->getTable();
+
+        return $this->invitations()
+            ->accepted()
+            ->where("$table.user_id", $user->id ?? $user);
+    }
+
+    /**
+     * Determine whether the given user is in the invitable model.
+     */
+    public function hasInvitedUser(Model|int $user): bool
+    {
+        $table = $this->invitations()->getRelated()->getTable();
+
+        return $this->invitations()
+            ->whereNull('accepted_at')
+            ->whereNull('declined_at')
+            ->where("$table.user_id", $user->id ?? $user)
+            ->exists();
     }
 
     /**
      * Remove the given user from the invitable model.
      */
-    public function removeUser(Model|int $user): int
+    public function removeUser(Model|int $user): ?bool
     {
         return $this->invitations()
             ->where('user_id', $user->id ?? $user)
-            ->delete();
+            // First get the invitation before deleting it. Doing so, we'll make
+            // sure that the model events will be fired. Resulting in the roles
+            // and permissions of the model to be deleted.
+            ->first()
+            ?->delete();
+    }
+
+    /**
+     * Accept the invitation for the given user of this team.
+     */
+    public function acceptInvitation(Model|int $user): ?Invitation
+    {
+        return $this->replyToInvitation($user, true);
+    }
+
+    /**
+     * Decline the invitation for the given user of this team.
+     */
+    public function declineInvitation(Model|int $user): ?Invitation
+    {
+        return $this->replyToInvitation($user, false);
+    }
+
+    /**
+     * Accept or decline the given invitation.
+     */
+    private function replyToInvitation(Model|int $user, bool $accept): ?Invitation
+    {
+        $invitation = $this->invitations()
+            ->where('user_id', $user->id ?? $user)
+            ->first();
+
+        if ($invitation === null) {
+            return null;
+        }
+
+        $method = $accept ? 'accept' : 'decline';
+
+        return tap($invitation)->$method();
     }
 
     /**
