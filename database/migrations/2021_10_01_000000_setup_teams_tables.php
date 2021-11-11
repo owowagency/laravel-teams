@@ -11,19 +11,23 @@ class SetupTeamsTables extends Migration
      */
     public function up(): void
     {
-        Schema::create('teams', function (Blueprint $table) {
+        $teamModel = new (config('teams.model'));
+
+        Schema::create($teamModel->getTable(), function (Blueprint $table) {
             $table->id();
             $table->string('name')->index();
-            $table->tinyInteger('type')->nullable()->default(null);
+            $table->unsignedTinyInteger('type')->nullable()->default(null);
+            $table->unsignedTinyInteger('privacy')->nullable()->default(null);
             $table->timestamps();
         });
 
         Schema::create('invitations', function (Blueprint $table) {
             $table->id();
             $table->morphs('model');
-            $table->foreignIdFor(config('teams.user_model'))
-                ->constrained()
-                ->cascadeOnDelete();
+            $table->foreignIdFor(config('teams.user_model'))->constrained()->cascadeOnDelete();
+            $table->unsignedTinyInteger('type');
+            $table->timestamp('accepted_at')->nullable()->default(null);
+            $table->timestamp('declined_at')->nullable()->default(null);
             $table->timestamps();
 
             $table->unique(['model_type', 'model_id', 'user_id']);

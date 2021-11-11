@@ -1,16 +1,21 @@
 [
     {
         "id": 1,
-        "name": "Palma Bartoletti",
+        "name": "Emie Schmitt",
         "type": null,
-        "created_at": "2021-11-02T09:24:43.000000Z",
-        "updated_at": "2021-11-02T09:24:43.000000Z",
+        "privacy": null,
+        "created_at": "2021-11-11T07:18:27.000000Z",
+        "updated_at": "2021-11-11T07:18:27.000000Z",
         "pivot": {
-            "user_id": "1",
-            "model_id": "1",
+            "user_id": 1,
+            "model_id": 1,
             "id": 1,
-            "created_at": "2021-11-02T09:24:43.000000Z",
-            "updated_at": "2021-11-02T09:24:43.000000Z"
+            "model_type": "OwowAgency\\Teams\\Models\\Team",
+            "type": 0,
+            "accepted_at": null,
+            "declined_at": null,
+            "created_at": "2021-11-11T07:18:27.000000Z",
+            "updated_at": "2021-11-11T07:18:27.000000Z"
         }
     }
 ]

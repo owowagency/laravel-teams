@@ -1,0 +1,23 @@
+[
+    {
+        "id": 1,
+        "name": "Octavia Spinka",
+        "email": "shagenes@example.com",
+        "email_verified_at": "2021-11-11 09:36:51",
+        "password": "$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC\/.og\/at2.uheWG\/igi",
+        "remember_token": "ctXxiVZ11R",
+        "created_at": "2021-11-11T09:36:51.000000Z",
+        "updated_at": "2021-11-11T09:36:51.000000Z",
+        "pivot": {
+            "model_id": 1,
+            "user_id": 1,
+            "id": 1,
+            "model_type": "OwowAgency\\Teams\\Models\\Team",
+            "type": 0,
+            "accepted_at": "2021-11-11T09:36:51.000000Z",
+            "declined_at": null,
+            "created_at": "2021-11-11T09:36:51.000000Z",
+            "updated_at": "2021-11-11T09:36:51.000000Z"
+        }
+    }
+]
