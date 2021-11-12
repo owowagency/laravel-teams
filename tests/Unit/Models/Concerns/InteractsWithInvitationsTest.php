@@ -15,10 +15,13 @@ use OwowAgency\Teams\Exceptions\InvitationAlreadyDeclined;
 use OwowAgency\Teams\Models\Invitation;
 use OwowAgency\Teams\Models\Team;
 use OwowAgency\Teams\Tests\Support\Models\User;
+use OwowAgency\Teams\Tests\Support\TeamAssertions;
 use OwowAgency\Teams\Tests\TestCase;
 
 class InteractsWithInvitationsTest extends TestCase
 {
+    use TeamAssertions;
+
     /** @test */
     public function it_receives_users_with_type(): void
     {
@@ -47,16 +50,9 @@ class InteractsWithInvitationsTest extends TestCase
 
         $user = User::factory()->create();
 
-        $invitation = $team->addUser($user, InvitationType::INVITATION);
+        $team->addUser($user, InvitationType::INVITATION);
 
-        $this->assertDatabaseHas('invitations', [
-            'id' => $invitation->id,
-            'model_type' => $team->getMorphClass(),
-            'model_id' => $team->id,
-            'user_id' => $user->id,
-            'type' => InvitationType::INVITATION,
-            'accepted_at' => null,
-        ]);
+        $this->assertUserInvitedToTeam($user, $team);
 
         Event::assertDispatched(UserInvitedToTeam::class);
     }
@@ -70,16 +66,9 @@ class InteractsWithInvitationsTest extends TestCase
 
         $user = User::factory()->create();
 
-        $invitation = $team->addUser($user->id, InvitationType::REQUEST);
+        $team->addUser($user->id, InvitationType::REQUEST);
 
-        $this->assertDatabaseHas('invitations', [
-            'id' => $invitation->id,
-            'model_type' => $team->getMorphClass(),
-            'model_id' => $team->id,
-            'user_id' => $user->id,
-            'type' => InvitationType::REQUEST,
-            'accepted_at' => null,
-        ]);
+        $this->assertUserRequestedToJoinTeam($user, $team);
 
         Event::assertDispatched(UserRequestedToJoinTeam::class);
     }
@@ -91,16 +80,9 @@ class InteractsWithInvitationsTest extends TestCase
 
         $user = User::factory()->create();
 
-        $invitation = $team->inviteUser($user, InvitationType::INVITATION);
+        $team->inviteUser($user, InvitationType::INVITATION);
 
-        $this->assertDatabaseHas('invitations', [
-            'id' => $invitation->id,
-            'model_type' => $team->getMorphClass(),
-            'model_id' => $team->id,
-            'user_id' => $user->id,
-            'type' => InvitationType::INVITATION,
-            'accepted_at' => null,
-        ]);
+        $this->assertUserInvitedToTeam($user, $team);
     }
 
     /** @test */
@@ -110,16 +92,9 @@ class InteractsWithInvitationsTest extends TestCase
 
         $user = User::factory()->create();
 
-        $invitation = $team->requestToJoin($user);
+        $team->requestToJoin($user);
 
-        $this->assertDatabaseHas('invitations', [
-            'id' => $invitation->id,
-            'model_type' => $team->getMorphClass(),
-            'model_id' => $team->id,
-            'user_id' => $user->id,
-            'type' => InvitationType::REQUEST,
-            'accepted_at' => null,
-        ]);
+        $this->assertUserRequestedToJoinTeam($user, $team);
     }
 
     /** @test */
@@ -129,13 +104,9 @@ class InteractsWithInvitationsTest extends TestCase
 
         $user = User::factory()->create();
 
-        $invitation = $team->inviteUser($user, 'admin');
+        $team->inviteUser($user, 'admin');
 
-        $this->assertDatabaseHas('model_has_roles', [
-            'role_id' => 1,
-            'model_type' => $invitation->getMorphClass(),
-            'model_id' => $invitation->id,
-        ]);
+        $this->assertUserInvitedToTeam($user, $team, assertWithRoles: 'admin');
     }
 
     /** @test */
@@ -145,13 +116,9 @@ class InteractsWithInvitationsTest extends TestCase
 
         $user = User::factory()->create();
 
-        $invitation = $team->inviteUser($user, permissions: 1);
+        $team->inviteUser($user, permissions: 1);
 
-        $this->assertDatabaseHas('model_has_permissions', [
-            'permission_id' => 1,
-            'model_type' => $invitation->getMorphClass(),
-            'model_id' => $invitation->id,
-        ]);
+        $this->assertUserInvitedToTeam($user, $team, assertWithPermissions: 1);
     }
 
     /** @test */
@@ -161,19 +128,9 @@ class InteractsWithInvitationsTest extends TestCase
 
         $user = User::factory()->create();
 
-        $invitation = $team->inviteUser($user, [1], ['edit-users']);
+        $team->inviteUser($user, [1], ['edit-users']);
 
-        $this->assertDatabaseHas('model_has_roles', [
-            'role_id' => 1,
-            'model_type' => $invitation->getMorphClass(),
-            'model_id' => $invitation->id,
-        ]);
-
-        $this->assertDatabaseHas('model_has_permissions', [
-            'permission_id' => 1,
-            'model_type' => $invitation->getMorphClass(),
-            'model_id' => $invitation->id,
-        ]);
+        $this->assertUserInvitedToTeam($user, $team, 1, 'edit-users');
     }
 
     /** @test */
@@ -279,11 +236,7 @@ class InteractsWithInvitationsTest extends TestCase
 
         $this->assertTrue($removed);
 
-        $this->assertDatabaseMissing('invitations', [
-            'model_type' => $invitation->model_type,
-            'model_id' => $invitation->model_id,
-            'user_id' => $invitation->user_id,
-        ]);
+        $this->assertUserNotInAnyTeam($invitation->user, $invitation->model);
 
         Event::assertDispatched(UserLeftTeam::class);
     }
@@ -297,11 +250,7 @@ class InteractsWithInvitationsTest extends TestCase
 
         $this->assertTrue($removed);
 
-        $this->assertDatabaseMissing('invitations', [
-            'model_type' => $invitation->model_type,
-            'model_id' => $invitation->model_id,
-            'user_id' => $invitation->user_id,
-        ]);
+        $this->assertUserNotInAnyTeam($invitation->user, $invitation->model);
     }
 
     /** @test */
@@ -315,11 +264,7 @@ class InteractsWithInvitationsTest extends TestCase
 
         $this->assertNull($removed);
 
-        $this->assertDatabaseHas('invitations', [
-            'model_type' => $invitation->model_type,
-            'model_id' => $invitation->model_id,
-            'user_id' => $invitation->user_id,
-        ]);
+        $this->assertUserRequestedToJoinTeam($invitation->user, $invitation->model);
     }
 
     /** @test */
