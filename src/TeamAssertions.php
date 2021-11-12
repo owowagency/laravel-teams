@@ -1,6 +1,6 @@
 <?php
 
-namespace OwowAgency\Teams\Tests\Support;
+namespace OwowAgency\Teams;
 
 use Illuminate\Database\Eloquent\Model;
 use OwowAgency\Teams\Enums\InvitationType;
