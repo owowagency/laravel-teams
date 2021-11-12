@@ -183,7 +183,7 @@ trait TeamAssertions
         bool $exists = true,
     ): void {
         $invitation = Invitation::where('user_id', $userId)
-            ->where('model_type', (new Team())->getMorphClass());
+            ->where('model_type', (new (config('teams.model'))())->getMorphClass());
 
         // Check if we should assert that the user is invited to a certain team.
         if ($teamId !== null) {
