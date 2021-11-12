@@ -14,8 +14,8 @@ use OwowAgency\Teams\Exceptions\InvitationAlreadyAccepted;
 use OwowAgency\Teams\Exceptions\InvitationAlreadyDeclined;
 use OwowAgency\Teams\Models\Invitation;
 use OwowAgency\Teams\Models\Team;
-use OwowAgency\Teams\Tests\Support\Models\User;
 use OwowAgency\Teams\TeamAssertions;
+use OwowAgency\Teams\Tests\Support\Models\User;
 use OwowAgency\Teams\Tests\TestCase;
 
 class InteractsWithInvitationsTest extends TestCase
