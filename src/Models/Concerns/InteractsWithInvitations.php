@@ -94,7 +94,8 @@ trait InteractsWithInvitations
         } catch (InvitationAlreadyAccepted) {
             //
         } finally {
-            return $invitation;
+            // Refresh to model to make sure all properties are properly retrieved.
+            return $invitation->refresh();
         }
     }
 
