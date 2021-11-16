@@ -3,7 +3,6 @@
 namespace OwowAgency\Teams;
 
 use Illuminate\Support\ServiceProvider;
-use OwowAgency\Teams\Models\Invitation;
 use OwowAgency\Teams\Observers\InvitationObserver;
 
 class TeamsServiceProvider extends ServiceProvider

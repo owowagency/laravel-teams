@@ -4,7 +4,6 @@ namespace OwowAgency\Teams\Models\Concerns;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use OwowAgency\Teams\Models\Team;
-use OwowAgency\Teams\Models\TeamTeam;
 
 trait RelatesToTeams
 {
