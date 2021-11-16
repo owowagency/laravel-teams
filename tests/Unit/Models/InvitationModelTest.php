@@ -39,6 +39,9 @@ class InvitationModelTest extends TestCase
 
         Invitation::factory()->accepted()->create();
 
+        // Open invitation.
+        Invitation::factory()->create();
+
         $this->assertJsonStructureSnapshot(Invitation::accepted()->get());
     }
 
@@ -49,7 +52,23 @@ class InvitationModelTest extends TestCase
 
         Invitation::factory()->accepted()->create();
 
+        // Open invitation.
+        Invitation::factory()->create();
+
         $this->assertJsonStructureSnapshot(Invitation::declined()->get());
+    }
+
+    /** @test */
+    public function it_scopes_open_invitations(): void
+    {
+        Invitation::factory()->declined()->create();
+
+        Invitation::factory()->accepted()->create();
+
+        // Open invitation.
+        Invitation::factory()->create();
+
+        $this->assertJsonStructureSnapshot(Invitation::open()->get());
     }
 
     /** @test */

@@ -13,8 +13,8 @@ trait RelatesToTeams
      */
     public function children(): BelongsToMany
     {
-        return $this->belongsToMany(Team::class, 'team_team', 'parent_id', 'child_id')
-            ->using(TeamTeam::class);
+        return $this->belongsToMany(config('teams.models.team'), 'team_team', 'parent_id', 'child_id')
+            ->using(config('teams.models.team_team'));
     }
 
     /**
@@ -22,8 +22,8 @@ trait RelatesToTeams
      */
     public function parents(): BelongsToMany
     {
-        return $this->belongsToMany(Team::class, 'team_team', 'child_id', 'parent_id')
-            ->using(TeamTeam::class);
+        return $this->belongsToMany(config('teams.models.team'), 'team_team', 'child_id', 'parent_id')
+            ->using(config('teams.models.team_team'));
     }
 
     /**
@@ -68,7 +68,7 @@ trait RelatesToTeams
      */
     public function hasParentTeam(Team|int $team): bool
     {
-        $teamsTable = (new (config('teams.model')))->getTable();
+        $teamsTable = (new (config('teams.models.team')))->getTable();
 
         return $this->parents()
             ->where("$teamsTable.id", $team->id ?? $team)
@@ -80,7 +80,7 @@ trait RelatesToTeams
      */
     public function hasChildTeam(Team|int $team): bool
     {
-        $teamsTable = (new (config('teams.model')))->getTable();
+        $teamsTable = (new (config('teams.models.team')))->getTable();
 
         return $this->children()
             ->where("$teamsTable.id", $team->id ?? $team)

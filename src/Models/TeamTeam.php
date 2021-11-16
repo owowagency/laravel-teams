@@ -21,7 +21,7 @@ class TeamTeam extends Pivot
      */
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(Team::class);
+        return $this->belongsTo(config('teams.models.team'));
     }
 
     /**
@@ -29,7 +29,7 @@ class TeamTeam extends Pivot
      */
     public function child(): BelongsTo
     {
-        return $this->belongsTo(Team::class);
+        return $this->belongsTo(config('teams.models.team'));
     }
 
     /**

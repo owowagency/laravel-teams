@@ -28,7 +28,7 @@ class TeamsServiceProvider extends ServiceProvider
             ], 'migrations');
         }
 
-        Invitation::observe(InvitationObserver::class);
+        config('teams.models.invitation')::observe(InvitationObserver::class);
     }
 
     /**

@@ -5,23 +5,15 @@ namespace OwowAgency\Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use OwowAgency\Teams\Enums\InvitationType;
 use OwowAgency\Teams\Models\Contracts\HasInvitations;
-use OwowAgency\Teams\Models\Invitation;
 
 class InvitationFactory extends Factory
 {
-    /**
-     * The name of the factory's corresponding model.
-     *
-     * @var string
-     */
-    protected $model = Invitation::class;
-
     /**
      * Define the model's default state.
      */
     public function definition(): array
     {
-        $teamModel = config('teams.model');
+        $teamModel = config('teams.models.team');
 
         return [
             'model_id' => $teamModel::factory(),
@@ -62,5 +54,13 @@ class InvitationFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'declined_at' => now(),
         ]);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function modelName(): string
+    {
+        return config('teams.models.invitation');
     }
 }

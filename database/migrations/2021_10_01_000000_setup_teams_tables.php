@@ -11,7 +11,7 @@ class SetupTeamsTables extends Migration
      */
     public function up(): void
     {
-        $teamModel = new (config('teams.model'));
+        $teamModel = new (config('teams.models.team'));
 
         Schema::create($teamModel->getTable(), function (Blueprint $table) {
             $table->id();
@@ -38,7 +38,7 @@ class SetupTeamsTables extends Migration
         });
 
         Schema::create('team_team', function (Blueprint $table) {
-            $teamModel = new (config('teams.model'));
+            $teamModel = new (config('teams.models.team'));
 
             $table->foreignIdFor($teamModel, 'parent_id')
                 ->constrained($teamModel->getTable())

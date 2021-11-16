@@ -16,7 +16,7 @@ trait InteractsWithInvitations
      */
     public function invitations(): MorphMany
     {
-        return $this->morphMany(Invitation::class, 'model');
+        return $this->morphMany(config('teams.models.invitation'), 'model');
     }
 
     /**
@@ -25,15 +25,16 @@ trait InteractsWithInvitations
     public function users(): BelongsToMany
     {
         $instance = new (config('teams.user_model'));
+        $invitationModel = config('teams.models.invitation');
 
         // Use a custom belongs to many relationship so that we can easily
         // add scopes on the pivot relationship.
         $belongsToMany = new BelongsToMany(
-            $instance->newQuery(), $this, (new Invitation())->getTable(), 'model_id',
+            $instance->newQuery(), $this, (new $invitationModel())->getTable(), 'model_id',
             $instance->getForeignKey(), $this->getKeyName(), $instance->getKeyName(),
         );
 
-        return $belongsToMany->using(Invitation::class)
+        return $belongsToMany->using($invitationModel)
             ->withAccepted()
             ->withPivot(['id', 'model_type', 'type', 'accepted_at', 'declined_at'])
             ->withTimestamps();
