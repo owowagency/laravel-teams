@@ -78,8 +78,10 @@ class Invitation extends Pivot
      */
     public function scopeAccepted(Builder $query): Builder
     {
-        return $query->whereNotNull('accepted_at')
-            ->whereNull('declined_at');
+        return $query->where(function (Builder $query) {
+            $query->whereNotNull('accepted_at')
+                ->whereNull('declined_at');
+        });
     }
 
     /**
@@ -87,8 +89,10 @@ class Invitation extends Pivot
      */
     public function scopeDeclined(Builder $query): Builder
     {
-        return $query->whereNotNull('declined_at')
-            ->whereNull('accepted_at');
+        return $query->where(function (Builder $query) {
+            $query->whereNotNull('declined_at')
+                ->whereNull('accepted_at');
+        });
     }
 
     /**
@@ -96,8 +100,10 @@ class Invitation extends Pivot
      */
     public function scopeOpen(Builder $query): Builder
     {
-        return $query->whereNull('accepted_at')
-            ->whereNull('declined_at');
+        return $query->where(function (Builder $query) {
+            $query->whereNull('accepted_at')
+                ->whereNull('declined_at');
+        });
     }
 
     /**
