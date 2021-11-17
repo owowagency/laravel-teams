@@ -182,8 +182,8 @@ trait TeamAssertions
         $assertWithPermissions = null,
         bool $exists = true,
     ): void {
-        $invitation = Invitation::where('user_id', $userId)
-            ->where('model_type', (new (config('teams.model'))())->getMorphClass());
+        $invitation = config('teams.models.invitation')::where('user_id', $userId)
+            ->where('model_type', (new (config('teams.models.team'))())->getMorphClass());
 
         // Check if we should assert that the user is invited to a certain team.
         if ($teamId !== null) {

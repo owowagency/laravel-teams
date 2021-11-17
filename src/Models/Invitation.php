@@ -78,7 +78,10 @@ class Invitation extends Pivot
      */
     public function scopeAccepted(Builder $query): Builder
     {
-        return $query->whereNotNull('accepted_at');
+        return $query->where(function (Builder $query) {
+            $query->whereNotNull('accepted_at')
+                ->whereNull('declined_at');
+        });
     }
 
     /**
@@ -86,7 +89,21 @@ class Invitation extends Pivot
      */
     public function scopeDeclined(Builder $query): Builder
     {
-        return $query->whereNotNull('declined_at');
+        return $query->where(function (Builder $query) {
+            $query->whereNotNull('declined_at')
+                ->whereNull('accepted_at');
+        });
+    }
+
+    /**
+     * Scope a query to include only open invitations.
+     */
+    public function scopeOpen(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query->whereNull('accepted_at')
+                ->whereNull('declined_at');
+        });
     }
 
     /**
@@ -94,9 +111,7 @@ class Invitation extends Pivot
      */
     public function accept(): Invitation
     {
-        if ($this->accepted_at !== null) {
-            throw new InvitationAlreadyAccepted();
-        }
+        throw_if($this->accepted_at !== null, InvitationAlreadyAccepted::class);
 
         $this->update([
             'accepted_at' => now(),
@@ -110,13 +125,9 @@ class Invitation extends Pivot
      */
     public function decline(): Invitation
     {
-        if ($this->accepted_at !== null) {
-            throw new InvitationAlreadyAccepted();
-        }
+        throw_if($this->accepted_at !== null, InvitationAlreadyAccepted::class);
 
-        if ($this->declined_at !== null) {
-            throw new InvitationAlreadyDeclined();
-        }
+        throw_if($this->declined_at !== null, InvitationAlreadyDeclined::class);
 
         $this->update([
             'declined_at' => now(),

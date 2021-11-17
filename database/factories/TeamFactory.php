@@ -26,6 +26,6 @@ class TeamFactory extends Factory
      */
     public function modelName(): string
     {
-        return config('teams.model');
+        return config('teams.models.team');
     }
 }

@@ -4,7 +4,6 @@ namespace OwowAgency\Teams\Models\Concerns;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use OwowAgency\Teams\Models\Invitation;
 use OwowAgency\Teams\Models\Team;
 
 trait HasTeams
@@ -14,9 +13,9 @@ trait HasTeams
      */
     public function teams(): BelongsToMany
     {
-        $teamModel = config('teams.model');
+        $teamModel = config('teams.models.team');
 
-        return $this->belongsToMany($teamModel, Invitation::class, 'user_id', 'model_id')
+        return $this->belongsToMany($teamModel, config('teams.models.invitation'), 'user_id', 'model_id')
             ->wherePivot('model_type', (new $teamModel())->getMorphClass())
             ->withPivot(['id', 'model_type', 'type', 'accepted_at', 'declined_at'])
             ->withTimestamps();
@@ -27,7 +26,7 @@ trait HasTeams
      */
     public function invitations(): HasMany
     {
-        return $this->hasMany(Invitation::class);
+        return $this->hasMany(config('teams.models.invitation'));
     }
 
     /**
@@ -52,7 +51,7 @@ trait HasTeams
 
         return $this->invitations()
             ->where("$table.model_id", $team->id ?? $team)
-            ->where('model_type', (new (config('teams.model')))->getMorphClass())
+            ->where('model_type', (new (config('teams.models.team')))->getMorphClass())
             ->role($roles)
             ->exists();
     }
@@ -67,7 +66,7 @@ trait HasTeams
 
         return $this->invitations()
             ->where("$table.model_id", $team->id ?? $team)
-            ->where('model_type', (new (config('teams.model')))->getMorphClass())
+            ->where('model_type', (new (config('teams.models.team')))->getMorphClass())
             ->permission($permissions)
             ->exists();
     }
