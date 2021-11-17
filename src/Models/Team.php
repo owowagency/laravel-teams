@@ -63,6 +63,23 @@ class Team extends Model implements HasInvitations
     }
 
     /**
+     * Determine whether the given user is the creator of this team.
+     */
+    public function isCreator(Model|int $user): bool
+    {
+        // If the creator relationship is eager loaded and the given user is an
+        // instance of the Model class we can check if the given user is the
+        // exact same model as the creator model.
+        if ($user instanceof Model && $this->relationLoaded('creator')) {
+            return $user->is($this->creator);
+        }
+
+        // If the creator relationship is not eager loaded or the user is an
+        // integer we'll only check if the ids of the two variables are matching.
+        return $this->creator_id === ($user->id ?? $user);
+    }
+
+    /**
      * {@inheritdoc}
      */
     protected static function newFactory()

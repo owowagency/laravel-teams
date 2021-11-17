@@ -110,4 +110,42 @@ class TeamModelTest extends TestCase
 
         $this->assertJsonStructureSnapshot($team->users);
     }
+
+    /** @test */
+    public function is_has_a_creator(): void
+    {
+        $user = User::factory()->create();
+
+        $team = Team::factory()->create([
+            'creator_id' => $user->id,
+        ]);
+
+        $this->assertTrue($team->isCreator($user));
+        $this->assertTrue($team->isCreator($user->id));
+
+        // Eager load the relationship to check if the special if statement is
+        // also called.
+        $team->load('creator');
+
+        $this->assertTrue($team->isCreator($user->id));
+        $this->assertTrue($team->isCreator($user));
+    }
+
+    /** @test */
+    public function is_doesnt_have_a_creator(): void
+    {
+        $user = User::factory()->create();
+
+        $team = Team::factory()->create();
+
+        $this->assertFalse($team->isCreator($user));
+        $this->assertFalse($team->isCreator($user->id));
+
+        // Eager load the relationship to check if the special if statement is
+        // also called.
+        $team->load('creator');
+
+        $this->assertFalse($team->isCreator($user->id));
+        $this->assertFalse($team->isCreator($user));
+    }
 }
