@@ -25,7 +25,9 @@ class SetupTeamsTables extends Migration
             $table->timestamps();
         });
 
-        Schema::create('invitations', function (Blueprint $table) {
+        $invitationModel = new (config('teams.models.invitation'));
+
+        Schema::create($invitationModel->getTable(), function (Blueprint $table) {
             $table->id();
             $table->morphs('model');
             $table->foreignIdFor(config('teams.user_model'))->constrained()->cascadeOnDelete();
@@ -37,7 +39,9 @@ class SetupTeamsTables extends Migration
             $table->unique(['model_type', 'model_id', 'user_id']);
         });
 
-        Schema::create('team_team', function (Blueprint $table) {
+        $teamTeamModel = new (config('teams.models.team_team'));
+
+        Schema::create($teamTeamModel->getTable(), function (Blueprint $table) {
             $teamModel = new (config('teams.models.team'));
 
             $table->foreignIdFor($teamModel, 'parent_id')
