@@ -113,6 +113,8 @@ class Invitation extends Pivot
     {
         throw_if($this->accepted_at !== null, InvitationAlreadyAccepted::class);
 
+        throw_if($this->declined_at !== null, InvitationAlreadyDeclined::class);
+
         $this->update([
             'accepted_at' => now(),
         ]);
