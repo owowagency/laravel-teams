@@ -57,6 +57,16 @@ class InvitationFactory extends Factory
     }
 
     /**
+     * Mark the invitation as opened.
+     */
+    public function reopened(): InvitationFactory
+    {
+        return $this->state(fn (array $attributes) => [
+            'declined_at' => null,
+        ]);
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function modelName(): string
