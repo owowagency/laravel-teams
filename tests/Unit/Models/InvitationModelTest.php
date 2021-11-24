@@ -12,7 +12,7 @@ use OwowAgency\Teams\Events\UserLeftTeam;
 use OwowAgency\Teams\Events\UserRequestedToJoinTeam;
 use OwowAgency\Teams\Exceptions\InvitationAlreadyAccepted;
 use OwowAgency\Teams\Exceptions\InvitationAlreadyDeclined;
-use OwowAgency\Teams\Exceptions\InvitationAlreadyReopened;
+use OwowAgency\Teams\Exceptions\InvitationNotDeclined;
 use OwowAgency\Teams\Models\Invitation;
 use OwowAgency\Teams\Tests\TestCase;
 
@@ -204,7 +204,7 @@ class InvitationModelTest extends TestCase
     /** @test */
     public function it_cant_be_reopened_twice(): void
     {
-        $this->expectException(InvitationAlreadyReopened::class);
+        $this->expectException(InvitationNotDeclined::class);
 
         $invitation = Invitation::factory()->reopened()->create();
 
