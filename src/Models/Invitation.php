@@ -12,6 +12,7 @@ use OwowAgency\Database\Factories\InvitationFactory;
 use OwowAgency\Teams\Enums\InvitationType;
 use OwowAgency\Teams\Exceptions\InvitationAlreadyAccepted;
 use OwowAgency\Teams\Exceptions\InvitationAlreadyDeclined;
+use OwowAgency\Teams\Exceptions\InvitationNotDeclined;
 use Spatie\Permission\Traits\HasRoles;
 
 class Invitation extends Pivot
@@ -133,6 +134,20 @@ class Invitation extends Pivot
 
         $this->update([
             'declined_at' => now(),
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * Open the declined invitation.
+     */
+    public function reopen(): Invitation
+    {
+        throw_if($this->declined_at === null, InvitationNotDeclined::class);
+
+        $this->update([
+            'declined_at' => null,
         ]);
 
         return $this;

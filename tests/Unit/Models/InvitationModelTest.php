@@ -12,6 +12,7 @@ use OwowAgency\Teams\Events\UserLeftTeam;
 use OwowAgency\Teams\Events\UserRequestedToJoinTeam;
 use OwowAgency\Teams\Exceptions\InvitationAlreadyAccepted;
 use OwowAgency\Teams\Exceptions\InvitationAlreadyDeclined;
+use OwowAgency\Teams\Exceptions\InvitationNotDeclined;
 use OwowAgency\Teams\Models\Invitation;
 use OwowAgency\Teams\Tests\TestCase;
 
@@ -179,6 +180,35 @@ class InvitationModelTest extends TestCase
         $invitation = Invitation::factory()->declined()->create();
 
         $invitation->decline();
+    }
+
+    /** @test */
+    public function it_can_be_reopened(): void
+    {
+        Event::fake([UserRequestedToJoinTeam::class]);
+
+        $invitation = Invitation::factory()->create([
+            'declined_at' => now(),
+        ]);
+
+        $invitation->reopen();
+
+        $this->assertDatabaseHas('invitations', [
+            'id' => $invitation->id,
+            'declined_at' => null,
+        ]);
+
+        Event::assertDispatched(fn (UserRequestedToJoinTeam $e) => $e->invitation->is($invitation));
+    }
+
+    /** @test */
+    public function it_cant_be_reopened_twice(): void
+    {
+        $this->expectException(InvitationNotDeclined::class);
+
+        $invitation = Invitation::factory()->reopened()->create();
+
+        $invitation->reopen();
     }
 
     /** @test */
