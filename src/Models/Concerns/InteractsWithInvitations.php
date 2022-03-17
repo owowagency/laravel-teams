@@ -45,7 +45,7 @@ trait InteractsWithInvitations
     /**
      * Create a new teas Eloquent query builder for the model.
      */
-    private function newTeamsQuery(Model $model): EloquentBuilder
+    public function newTeamsQuery(Model $model): EloquentBuilder
     {
         $connection = $model->getConnection();
 
