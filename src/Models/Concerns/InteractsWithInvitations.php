@@ -2,12 +2,14 @@
 
 namespace OwowAgency\Teams\Models\Concerns;
 
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use OwowAgency\Teams\Enums\InvitationType;
 use OwowAgency\Teams\Exceptions\InvitationAlreadyAccepted;
 use OwowAgency\Teams\Models\Invitation;
-use OwowAgency\Teams\Models\Relations\BelongsToMany;
+use OwowAgency\Teams\Models\Query\Builder;
 
 trait InteractsWithInvitations
 {
@@ -30,7 +32,7 @@ trait InteractsWithInvitations
         // Use a custom belongs to many relationship so that we can easily
         // add scopes on the pivot relationship.
         $belongsToMany = new BelongsToMany(
-            $instance->newQuery(), $this, (new $invitationModel())->getTable(), 'model_id',
+            $this->newTeamsQuery($instance), $this, (new $invitationModel())->getTable(), 'model_id',
             $instance->getForeignKey(), $this->getKeyName(), $instance->getKeyName(),
         );
 
@@ -38,6 +40,22 @@ trait InteractsWithInvitations
             ->withAccepted()
             ->withPivot(['id', 'model_type', 'type', 'accepted_at', 'declined_at'])
             ->withTimestamps();
+    }
+
+    /**
+     * Create a new teas Eloquent query builder for the model.
+     */
+    private function newTeamsQuery(Model $model): EloquentBuilder
+    {
+        $connection = $model->getConnection();
+
+        $query = $model->newEloquentBuilder(
+            new Builder(
+                $connection, $connection->getQueryGrammar(), $connection->getPostProcessor(),
+            ),
+        );
+
+        return $query->setModel($model);
     }
 
     /**
