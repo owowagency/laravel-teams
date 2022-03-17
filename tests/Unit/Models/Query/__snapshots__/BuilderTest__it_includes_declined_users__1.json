@@ -1,0 +1,23 @@
+[
+    {
+        "id": 3,
+        "name": "Russell Beier",
+        "email": "eriberto87@example.org",
+        "email_verified_at": "2022-03-17 09:37:50",
+        "password": "$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC\/.og\/at2.uheWG\/igi",
+        "remember_token": "WSjSwI0VZ9",
+        "created_at": "2022-03-17T09:37:50.000000Z",
+        "updated_at": "2022-03-17T09:37:50.000000Z",
+        "pivot": {
+            "model_id": 1,
+            "user_id": 3,
+            "id": 3,
+            "model_type": "OwowAgency\\Teams\\Models\\Team",
+            "type": 1,
+            "accepted_at": null,
+            "declined_at": "2022-03-17T09:37:50.000000Z",
+            "created_at": "2022-03-17T09:37:50.000000Z",
+            "updated_at": "2022-03-17T09:37:50.000000Z"
+        }
+    }
+]

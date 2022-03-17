@@ -1,30 +1,30 @@
 <?php
 
-namespace OwowAgency\Teams\Models\Relations;
+namespace OwowAgency\Teams\Models\Query;
 
-use Illuminate\Database\Eloquent\Relations\BelongsToMany as BaseBelongsToMany;
+use Illuminate\Database\Query\Builder as BaseBuilder;
 
-class BelongsToMany extends BaseBelongsToMany
+class Builder extends BaseBuilder
 {
     /**
      * Include accepted invitations.
      */
-    private bool $withAccepted = true;
+    protected bool $withAccepted = true;
 
     /**
      * Include declined invitations.
      */
-    private bool $withDeclined = false;
+    protected bool $withDeclined = false;
 
     /**
      * Include open invitations.
      */
-    private bool $withOpen = false;
+    protected bool $withOpen = false;
 
     /**
      * Scope the query to include accepted invitations as well.
      */
-    public function withAccepted($withAccepted = true): BelongsToMany
+    public function withAccepted($withAccepted = true): self
     {
         $this->withAccepted = $withAccepted;
 
@@ -34,7 +34,7 @@ class BelongsToMany extends BaseBelongsToMany
     /**
      * Scope the query to include declined invitations as well.
      */
-    public function withDeclined($withDeclined = true): BelongsToMany
+    public function withDeclined($withDeclined = true): self
     {
         $this->withDeclined = $withDeclined;
 
@@ -44,7 +44,7 @@ class BelongsToMany extends BaseBelongsToMany
     /**
      * Scope the query to include declined invitations as well.
      */
-    public function withOpen($withOpen = true): BelongsToMany
+    public function withOpen($withOpen = true): self
     {
         $this->withOpen = $withOpen;
 
@@ -58,17 +58,17 @@ class BelongsToMany extends BaseBelongsToMany
     {
         $this->where(function ($query) {
             if ($this->withAccepted) {
-                $query->whereNotNull($this->qualifyPivotColumn('accepted_at'));
+                $query->whereNotNull('accepted_at');
             }
 
             if ($this->withDeclined) {
-                $query->orWhereNotNull($this->qualifyPivotColumn('declined_at'));
+                $query->orWhereNotNull('declined_at');
             }
 
             if ($this->withOpen) {
                 $query->orWhere(function ($query) {
-                    $query->whereNull($this->qualifyPivotColumn('accepted_at'))
-                        ->whereNull($this->qualifyPivotColumn('declined_at'));
+                    $query->whereNull('accepted_at')
+                        ->whereNull('declined_at');
                 });
             }
         });
