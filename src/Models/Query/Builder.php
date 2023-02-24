@@ -9,70 +9,76 @@ class Builder extends BaseBuilder
     /**
      * Include accepted invitations.
      */
-    protected bool $withAccepted = true;
-
-    /**
-     * Include declined invitations.
-     */
-    protected bool $withDeclined = false;
-
-    /**
-     * Include open invitations.
-     */
-    protected bool $withOpen = false;
+    protected bool $withOtherQuery = false;
 
     /**
      * Scope the query to include accepted invitations as well.
      */
-    public function withAccepted($withAccepted = true): self
+    public function withAccepted(bool $withAccepted = true): self
     {
-        $this->withAccepted = $withAccepted;
-
-        return $this;
+        return $this->addWhereNull('accepted_at', $withAccepted);
     }
 
     /**
      * Scope the query to include declined invitations as well.
      */
-    public function withDeclined($withDeclined = true): self
+    public function withDeclined(bool $withDeclined = true): self
     {
-        $this->withDeclined = $withDeclined;
-
-        return $this;
+        return $this->addWhereNull('declined_at', $withDeclined);
     }
 
     /**
      * Scope the query to include declined invitations as well.
      */
-    public function withOpen($withOpen = true): self
+    public function withOpen(): self
     {
-        $this->withOpen = $withOpen;
+        $func = $this->withOtherQuery ? 'orWhere' : 'where';
 
-        return $this;
-    }
+        $this->withOtherQuery = true;
 
-    /**
-     * {@inheritdoc}
-     */
-    public function get($columns = ['*'])
-    {
-        $this->where(function ($query) {
-            if ($this->withAccepted) {
-                $query->whereNotNull('accepted_at');
-            }
-
-            if ($this->withDeclined) {
-                $query->orWhereNotNull('declined_at');
-            }
-
-            if ($this->withOpen) {
-                $query->orWhere(function ($query) {
-                    $query->whereNull('accepted_at')
-                        ->whereNull('declined_at');
-                });
-            }
+        return $this->$func(function ($query) {
+            $query->whereNull('accepted_at')
+                ->whereNull('declined_at');
         });
+    }
 
-        return parent::get($columns);
+    /**
+     * Add or remove a where clause.
+     */
+    public function addWhereNull(string $column, bool $include): self
+    {
+        // Get a collection of the current wheres.
+        $wheres = collect($this->wheres);
+
+        // Check if the given column already exists in the wheres.
+        $exists = $wheres->first(fn ($a) => $a['column'] == $column);
+
+        // Determine whether to use "and" or "or" to combine this condition with other conditions.
+        $boolean = $this->withOtherQuery ? 'or' : 'and';
+
+        if ($exists) {
+            if ($include) {
+                // If it should be included, update the values.
+                $exists['boolean'] = $boolean;
+                $exists['type'] = 'NotNull';
+            } else {
+                // If the column should not be included, filter it out of the arrays
+                $wheres = $wheres->filter(fn ($a) => $a['column'] != $column);
+            }
+        } else {
+            // If the column does not exist, add it to the wheres array
+            $type = 'NotNull';
+
+            $wheres->add(compact('type', 'column', 'boolean'));
+        }
+
+        // If neither the 'declined_at' nor 'accepted_at' columns are in the wheres.
+        // We need to use 'and' for the next query, so set it to false, otherwise set it to true.
+        $this->withOtherQuery = $wheres->contains(fn ($a) => in_array($a['column'], ['declined_at', 'accepted_at']));
+
+        // Set the new wheres array.
+        $this->wheres = $wheres->toArray();
+
+        return $this;
     }
 }
